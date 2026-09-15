@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
+import Chatbot from "../components/Chatbot";
 import api from "../services/api";
+
 
 function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -15,8 +18,14 @@ function Dashboard() {
         const response = await api.get("/auth/me/");
         setUser(response.data);
       } catch {
-        localStorage.removeItem("careerbridge-access");
-        localStorage.removeItem("careerbridge-refresh");
+        localStorage.removeItem(
+          "careerbridge-access",
+        );
+
+        localStorage.removeItem(
+          "careerbridge-refresh",
+        );
+
         navigate("/login");
       }
     };
@@ -25,8 +34,14 @@ function Dashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("careerbridge-access");
-    localStorage.removeItem("careerbridge-refresh");
+    localStorage.removeItem(
+      "careerbridge-access",
+    );
+
+    localStorage.removeItem(
+      "careerbridge-refresh",
+    );
+
     navigate("/login");
   };
 
@@ -46,7 +61,10 @@ function Dashboard() {
           CareerBridge
         </a>
 
-        <button type="button" onClick={handleLogout}>
+        <button
+          type="button"
+          onClick={handleLogout}
+        >
           {t("logout")}
         </button>
       </header>
@@ -77,9 +95,13 @@ function Dashboard() {
               >
                 {t("browseJobs")}
               </a>
-              <a className="secondary-button" href="/applications">
-  {t("myApplications")}
-</a>
+
+              <a
+                className="secondary-button"
+                href="/applications"
+              >
+                {t("myApplications")}
+              </a>
             </>
           )}
 
@@ -98,46 +120,78 @@ function Dashboard() {
               >
                 {t("browseJobs")}
               </a>
-              <a className="secondary-button" href="/applications">
-  {t("manageApplications")}
-</a>
-<a className="secondary-button" href="/my-jobs">
-  {t("myPostedJobs")}
-</a>
-<a
-  className="secondary-button"
-  href="/company-profile"
->
-  {t("editCompanyProfile")}
-</a>
+
+              <a
+                className="secondary-button"
+                href="/applications"
+              >
+                {t("manageApplications")}
+              </a>
+
+              <a
+                className="secondary-button"
+                href="/my-jobs"
+              >
+                {t("myPostedJobs")}
+              </a>
+
+              <a
+                className="secondary-button"
+                href="/company-profile"
+              >
+                {t("editCompanyProfile")}
+              </a>
             </>
           )}
         </div>
 
         <div className="profile-summary">
           <article>
-            <small>{t("username")}</small>
-            <strong>{user.username}</strong>
+            <small>
+              {t("username")}
+            </small>
+
+            <strong>
+              {user.username}
+            </strong>
           </article>
 
           <article>
-            <small>{t("email")}</small>
-            <strong>{user.email}</strong>
+            <small>
+              {t("email")}
+            </small>
+
+            <strong>
+              {user.email}
+            </strong>
           </article>
 
           <article>
-            <small>{t("accountType")}</small>
-            <strong>{user.role}</strong>
+            <small>
+              {t("accountType")}
+            </small>
+
+            <strong>
+              {user.role}
+            </strong>
           </article>
 
           <article>
-            <small>{t("preferredLanguage")}</small>
-            <strong>{user.preferred_language}</strong>
+            <small>
+              {t("preferredLanguage")}
+            </small>
+
+            <strong>
+              {user.preferred_language}
+            </strong>
           </article>
         </div>
       </section>
+
+      <Chatbot />
     </main>
   );
 }
+
 
 export default Dashboard;

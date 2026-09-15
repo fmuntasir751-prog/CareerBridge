@@ -128,5 +128,8 @@
 "jobUpdated": "The job was updated successfully.",
 "activeJob": "Make this job publicly visible",
 "saving": "Saving...",
-"saveChanges": "Save changes"
+"saveChanges": "Save changes",
+"profileImage": "Profile image",
+"resume": "Resume",
+"viewCurrentResume": "View current resume"
 }

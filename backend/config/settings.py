@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "profiles.apps.ProfilesConfig",
     "jobs",
     "applications",
+    "chatbot",
 ]
 
 

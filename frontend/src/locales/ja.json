@@ -128,5 +128,8 @@
 "jobUpdated": "求人情報を更新しました。",
 "activeJob": "この求人を公開する",
 "saving": "保存中...",
-"saveChanges": "変更を保存"
+"saveChanges": "変更を保存",
+"profileImage": "プロフィール画像",
+"resume": "履歴書・職務経歴書",
+"viewCurrentResume": "現在の履歴書を見る"
 }

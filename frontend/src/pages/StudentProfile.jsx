@@ -18,23 +18,35 @@ function StudentProfile() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(emptyProfile);
+  const [profileImage, setProfileImage] = useState(null);
+  const [resume, setResume] = useState(null);
+  const [currentImage, setCurrentImage] = useState("");
+  const [currentResume, setCurrentResume] = useState("");
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await api.get("/profiles/student/me/");
+        const response = await api.get(
+          "/profiles/student/me/",
+        );
 
         setProfile({
           headline: response.data.headline || "",
           bio: response.data.bio || "",
           skills: response.data.skills || "",
           university: response.data.university || "",
-          graduation_year: response.data.graduation_year || "",
+          graduation_year:
+            response.data.graduation_year || "",
           location: response.data.location || "",
         });
+
+        setCurrentImage(response.data.profile_image || "");
+        setCurrentResume(response.data.resume || "");
       } catch {
         setError(t("profileLoadError"));
       } finally {
@@ -58,17 +70,57 @@ function StudentProfile() {
     event.preventDefault();
     setMessage("");
     setError("");
+    setSaving(true);
 
-    const data = {
-      ...profile,
-      graduation_year: profile.graduation_year || null,
-    };
+    const formData = new FormData();
+
+    formData.append("headline", profile.headline);
+    formData.append("bio", profile.bio);
+    formData.append("skills", profile.skills);
+    formData.append("university", profile.university);
+    formData.append("location", profile.location);
+
+    if (profile.graduation_year) {
+      formData.append(
+        "graduation_year",
+        profile.graduation_year,
+      );
+    }
+
+    if (profileImage) {
+      formData.append("profile_image", profileImage);
+    }
+
+    if (resume) {
+      formData.append("resume", resume);
+    }
 
     try {
-      await api.patch("/profiles/student/me/", data);
+      const response = await api.patch(
+        "/profiles/student/me/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      setCurrentImage(response.data.profile_image || "");
+      setCurrentResume(response.data.resume || "");
+      setProfileImage(null);
+      setResume(null);
       setMessage(t("profileSaved"));
-    } catch {
-      setError(t("profileSaveError"));
+    } catch (requestError) {
+      const responseData = requestError.response?.data;
+
+      if (responseData) {
+        setError(Object.values(responseData).flat().join(" "));
+      } else {
+        setError(t("profileSaveError"));
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -90,6 +142,14 @@ function StudentProfile() {
         <h1>{t("editProfile")}</h1>
         <p className="auth-subtitle">{t("profileMessage")}</p>
 
+        {currentImage && (
+          <img
+            className="profile-preview"
+            src={currentImage}
+            alt={t("profileImage")}
+          />
+        )}
+
         {message && (
           <div className="form-message success">{message}</div>
         )}
@@ -99,6 +159,17 @@ function StudentProfile() {
         )}
 
         <form className="register-form" onSubmit={handleSubmit}>
+          <label>
+            {t("profileImage")}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) =>
+                setProfileImage(event.target.files[0] || null)
+              }
+            />
+          </label>
+
           <label>
             {t("headline")}
             <input
@@ -161,8 +232,34 @@ function StudentProfile() {
             />
           </label>
 
-          <button className="submit-button" type="submit">
-            {t("saveProfile")}
+          <label>
+            {t("resume")}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(event) =>
+                setResume(event.target.files[0] || null)
+              }
+            />
+          </label>
+
+          {currentResume && (
+            <a
+              className="current-file-link"
+              href={currentResume}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("viewCurrentResume")}
+            </a>
+          )}
+
+          <button
+            className="submit-button"
+            type="submit"
+            disabled={saving}
+          >
+            {saving ? t("saving") : t("saveProfile")}
           </button>
         </form>
       </section>
