@@ -193,6 +193,12 @@ function Dashboard() {
               >
                 {t("editCompanyProfile")}
               </a>
+              <a
+  className="secondary-button"
+  href="/company-analytics"
+>
+  {t("analytics")}
+</a>
             </>
           )}
         </div>

@@ -15,6 +15,7 @@ import Register from "./pages/Register.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import EditJob from "./pages/EditJob.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
 
 function App() {
   return (
@@ -34,7 +35,7 @@ function App() {
       <Route
         path="/company-profile"
         element={<CompanyProfile />}
-      />
+      />          
 
       <Route path="/jobs" element={<Jobs />} />
 
@@ -70,6 +71,10 @@ function App() {
       <Route
         path="/notifications"
         element={<Notifications />}
+      />
+      <Route
+        path="/company-analytics"
+        element={<CompanyAnalytics />}
       />
     </Routes>   
     

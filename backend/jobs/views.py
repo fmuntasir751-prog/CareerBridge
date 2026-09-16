@@ -1,13 +1,14 @@
-from django.db.models import Q
-from rest_framework import filters, viewsets
+from django.db.models import Count, Q
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from .models import Job, SavedJob
 from .permissions import IsCompanyOwnerOrReadOnly
 from .serializers import JobSerializer
-from rest_framework import filters, status, viewsets
+
 
 class JobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
@@ -33,6 +34,28 @@ class JobViewSet(viewsets.ModelViewSet):
         "salary_min",
         "salary_max",
     ]
+
+    def get_queryset(self):
+        queryset = Job.objects.select_related("company")
+
+        if self.action == "list":
+            return queryset.filter(is_active=True)
+
+        if self.action == "retrieve":
+            user = self.request.user
+
+            if user.is_authenticated:
+                return queryset.filter(
+                    Q(is_active=True) | Q(company=user)
+                )
+
+            return queryset.filter(is_active=True)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(company=self.request.user)
+
     @action(
         detail=True,
         methods=["post", "delete"],
@@ -100,10 +123,12 @@ class JobViewSet(viewsets.ModelViewSet):
                 "Only student accounts can view saved jobs."
             )
 
-        jobs = Job.objects.filter(
-            saved_by_users__user=request.user,
-        ).select_related("company").order_by(
-            "-saved_by_users__created_at",
+        jobs = (
+            Job.objects.filter(
+                saved_by_users__user=request.user,
+            )
+            .select_related("company")
+            .order_by("-saved_by_users__created_at")
         )
 
         serializer = self.get_serializer(
@@ -112,39 +137,17 @@ class JobViewSet(viewsets.ModelViewSet):
         )
 
         return Response(serializer.data)
-    def get_queryset(self):
-        queryset = Job.objects.select_related("company")
-
-        if self.action == "list":
-            return queryset.filter(is_active=True)
-
-        if self.action == "retrieve":
-            user = self.request.user
-
-            if user.is_authenticated:
-                return queryset.filter(
-                    Q(is_active=True) | Q(company=user)
-                )
-
-            return queryset.filter(is_active=True)
-
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(company=self.request.user)
 
     @action(
         detail=False,
         methods=["get"],
         url_path="mine",
+        permission_classes=[IsAuthenticated],
     )
     def my_jobs(self, request):
-        if (
-            not request.user.is_authenticated
-            or request.user.role != "company"
-        ):
+        if request.user.role != "company":
             raise PermissionDenied(
-                "Only company accountsHolder can manage jobs."
+                "Only company accounts can manage jobs."
             )
 
         jobs = (
@@ -159,3 +162,95 @@ class JobViewSet(viewsets.ModelViewSet):
         )
 
         return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="analytics",
+        permission_classes=[IsAuthenticated],
+    )
+    def analytics(self, request):
+        if request.user.role != "company":
+            raise PermissionDenied(
+                "Only company accounts can view analytics."
+            )
+
+        company_jobs = Job.objects.filter(
+            company=request.user,
+        )
+
+        summary = company_jobs.aggregate(
+            total_jobs=Count("id"),
+            active_jobs=Count(
+                "id",
+                filter=Q(is_active=True),
+            ),
+            inactive_jobs=Count(
+                "id",
+                filter=Q(is_active=False),
+            ),
+            total_applications=Count(
+                "applications",
+            ),
+            pending_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="pending",
+                ),
+            ),
+            reviewing_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="reviewing",
+                ),
+            ),
+            interview_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="interview",
+                ),
+            ),
+            accepted_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="accepted",
+                ),
+            ),
+            rejected_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="rejected",
+                ),
+            ),
+            withdrawn_applications=Count(
+                "applications",
+                filter=Q(
+                    applications__status="withdrawn",
+                ),
+            ),
+        )
+
+        jobs = (
+            company_jobs.annotate(
+                application_count=Count(
+                    "applications",
+                )
+            )
+            .values(
+                "id",
+                "title_en",
+                "title_ja",
+                "is_active",
+                "application_count",
+                "created_at",
+            )
+            .order_by("-application_count", "-created_at")
+        )
+
+        return Response(
+            {
+                "summary": summary,
+                "jobs": list(jobs),
+            },
+            status=status.HTTP_200_OK,
+        )
