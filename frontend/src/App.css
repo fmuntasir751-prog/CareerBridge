@@ -239,3 +239,78 @@
 .chatbot-job-links a:hover {
   background: #dbe7ff;
 }
+.save-job-button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px 18px;
+  border: 1px solid #315efb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #315efb;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-job-button:hover {
+  background: #edf2ff;
+}
+
+.save-job-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.job-save-message {
+  margin-top: 15px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #ecfdf3;
+  color: #15803d;
+  font-size: 13px;
+}
+
+.job-detail-sidebar .submit-button {
+  width: 100%;
+  margin-top: 12px;
+}
+.job-detail-sidebar .save-job-button {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px 18px;
+  border: 2px solid #315efb;
+  border-radius: 12px;
+  appearance: none;
+  background: #ffffff;
+  color: #315efb;
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.job-detail-sidebar .save-job-button:hover {
+  background: #edf2ff;
+}
+
+.job-detail-sidebar .save-job-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.job-detail-sidebar .job-save-message {
+  margin-top: 16px;
+  padding: 11px 13px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #ecfdf3;
+  color: #15803d;
+  font-size: 14px;
+}
+
+.job-detail-sidebar .submit-button {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}

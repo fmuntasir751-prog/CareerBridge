@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import Chatbot from "../components/Chatbot";
 import api from "../services/api";
 
-
 function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -21,7 +20,6 @@ function Dashboard() {
         localStorage.removeItem(
           "careerbridge-access",
         );
-
         localStorage.removeItem(
           "careerbridge-refresh",
         );
@@ -37,7 +35,6 @@ function Dashboard() {
     localStorage.removeItem(
       "careerbridge-access",
     );
-
     localStorage.removeItem(
       "careerbridge-refresh",
     );
@@ -102,6 +99,13 @@ function Dashboard() {
               >
                 {t("myApplications")}
               </a>
+
+              <a
+                className="secondary-button"
+                href="/saved-jobs"
+              >
+                {t("savedJobs")}
+              </a>
             </>
           )}
 
@@ -147,40 +151,24 @@ function Dashboard() {
 
         <div className="profile-summary">
           <article>
-            <small>
-              {t("username")}
-            </small>
-
-            <strong>
-              {user.username}
-            </strong>
+            <small>{t("username")}</small>
+            <strong>{user.username}</strong>
           </article>
 
           <article>
-            <small>
-              {t("email")}
-            </small>
-
-            <strong>
-              {user.email}
-            </strong>
+            <small>{t("email")}</small>
+            <strong>{user.email}</strong>
           </article>
 
           <article>
-            <small>
-              {t("accountType")}
-            </small>
-
-            <strong>
-              {user.role}
-            </strong>
+            <small>{t("accountType")}</small>
+            <strong>{user.role}</strong>
           </article>
 
           <article>
             <small>
               {t("preferredLanguage")}
             </small>
-
             <strong>
               {user.preferred_language}
             </strong>
@@ -192,6 +180,5 @@ function Dashboard() {
     </main>
   );
 }
-
 
 export default Dashboard;

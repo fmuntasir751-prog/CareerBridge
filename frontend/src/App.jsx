@@ -1,5 +1,6 @@
+import "./App.css";
+import SavedJobs from "./pages/SavedJobs.jsx";
 import { Route, Routes } from "react-router-dom";
-
 import Applications from "./pages/Applications.jsx";
 import ApplyJob from "./pages/ApplyJob.jsx";
 import CompanyProfile from "./pages/CompanyProfile.jsx";
@@ -18,7 +19,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-
+<Route path="/saved-jobs" element={<SavedJobs />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
 
@@ -65,7 +66,7 @@ function App() {
         path="/applications"
         element={<Applications />}
       />
-    </Routes>
+    </Routes>   
   );
 }
 
