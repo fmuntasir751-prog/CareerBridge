@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "jobs",
     "applications",
     "chatbot",
+    "notifications",
 ]
 
 

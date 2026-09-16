@@ -14,6 +14,7 @@ import MyJobs from "./pages/MyJobs.jsx";
 import Register from "./pages/Register.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import EditJob from "./pages/EditJob.jsx";
+import Notifications from "./pages/Notifications.jsx";
 
 function App() {
   return (
@@ -66,7 +67,12 @@ function App() {
         path="/applications"
         element={<Applications />}
       />
+      <Route
+        path="/notifications"
+        element={<Notifications />}
+      />
     </Routes>   
+    
   );
 }
 

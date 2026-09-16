@@ -6,16 +6,33 @@ import Chatbot from "../components/Chatbot";
 import api from "../services/api";
 
 function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
+  const isJapanese = i18n.language.startsWith("ja");
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadDashboard = async () => {
       try {
-        const response = await api.get("/auth/me/");
-        setUser(response.data);
+        const userResponse = await api.get("/auth/me/");
+        const currentUser = userResponse.data;
+
+        setUser(currentUser);
+
+        if (currentUser.role === "student") {
+          try {
+            const notificationResponse = await api.get(
+              "/notifications/",
+            );
+
+            setNotifications(notificationResponse.data);
+          } catch {
+            setNotifications([]);
+          }
+        }
       } catch {
         localStorage.removeItem(
           "careerbridge-access",
@@ -28,7 +45,7 @@ function Dashboard() {
       }
     };
 
-    loadUser();
+    loadDashboard();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -41,6 +58,12 @@ function Dashboard() {
 
     navigate("/login");
   };
+
+  const unreadCount = notifications.filter(
+    (notification) => !notification.is_read,
+  ).length;
+
+  const latestNotification = notifications[0];
 
   if (!user) {
     return (
@@ -58,12 +81,37 @@ function Dashboard() {
           CareerBridge
         </a>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-        >
-          {t("logout")}
-        </button>
+        <div className="dashboard-header-actions">
+          {user.role === "student" && (
+            <button
+              className="notification-button"
+              type="button"
+              aria-label={
+                isJapanese ? "通知" : "Notifications"
+              }
+              onClick={() => navigate("/notifications")}
+            >
+              <span aria-hidden="true">🔔</span>
+
+              <span className="notification-button-text">
+                {isJapanese ? "通知" : "Notifications"}
+              </span>
+
+              {unreadCount > 0 && (
+                <span className="notification-count">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleLogout}
+          >
+            {t("logout")}
+          </button>
+        </div>
       </header>
 
       <section className="dashboard-content">
@@ -149,6 +197,57 @@ function Dashboard() {
           )}
         </div>
 
+        {user.role === "student" &&
+          latestNotification && (
+            <section
+              className={`dashboard-notification-preview ${
+                latestNotification.is_read
+                  ? "read"
+                  : "unread"
+              }`}
+            >
+              <div className="dashboard-notification-icon">
+                🔔
+              </div>
+
+              <div>
+                <small>
+                  {latestNotification.is_read
+                    ? isJapanese
+                      ? "最新の通知"
+                      : "Latest notification"
+                    : isJapanese
+                      ? "新しい通知"
+                      : "New notification"}
+                </small>
+
+                <h2>
+                  {isJapanese
+                    ? latestNotification.title_ja
+                    : latestNotification.title_en}
+                </h2>
+
+                <p>
+                  {isJapanese
+                    ? latestNotification.message_ja
+                    : latestNotification.message_en}
+                </p>
+              </div>
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() =>
+                  navigate("/notifications")
+                }
+              >
+                {isJapanese
+                  ? "通知を見る"
+                  : "View notifications"}
+              </button>
+            </section>
+          )}
+
         <div className="profile-summary">
           <article>
             <small>{t("username")}</small>
@@ -169,6 +268,7 @@ function Dashboard() {
             <small>
               {t("preferredLanguage")}
             </small>
+
             <strong>
               {user.preferred_language}
             </strong>

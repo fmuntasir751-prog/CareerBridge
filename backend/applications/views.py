@@ -7,6 +7,7 @@ from rest_framework.parsers import (
     MultiPartParser,
 )
 from rest_framework.response import Response
+from notifications.models import Notification
 
 from .models import Application
 from .permissions import ApplicationPermission
@@ -73,7 +74,64 @@ class ApplicationViewSet(
             applicant=user,
             status=Application.Status.PENDING,
         )
+    def perform_update(self, serializer):
+        previous_status = serializer.instance.status
+        application = serializer.save()
 
+        if previous_status == application.status:
+            return
+
+        status_labels_en = {
+            "pending": "Pending",
+            "reviewing": "Reviewing",
+            "interview": "Interview",
+            "accepted": "Accepted",
+            "rejected": "Rejected",
+            "withdrawn": "Withdrawn",
+        }
+
+        status_labels_ja = {
+            "pending": "応募済み",
+            "reviewing": "選考中",
+            "interview": "面接",
+            "accepted": "採用",
+            "rejected": "不採用",
+            "withdrawn": "辞退",
+        }
+
+        job_title_en = application.job.title_en
+        job_title_ja = (
+            application.job.title_ja
+            or application.job.title_en
+        )
+
+        status_en = status_labels_en.get(
+            application.status,
+            application.status,
+        )
+
+        status_ja = status_labels_ja.get(
+            application.status,
+            application.status,
+        )
+
+        Notification.objects.create(
+            recipient=application.applicant,
+            application=application,
+            notification_type=(
+                Notification.Type.APPLICATION_STATUS
+            ),
+            title_en="Application status updated",
+            title_ja="応募状況が更新されました",
+            message_en=(
+                f'Your application for "{job_title_en}" '
+                f"is now {status_en}."
+            ),
+            message_ja=(
+                f"「{job_title_ja}」への応募状況が"
+                f"「{status_ja}」に更新されました。"
+            ),
+        )
     @action(
         detail=True,
         methods=["post"],
