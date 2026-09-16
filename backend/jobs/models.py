@@ -74,3 +74,35 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title_en
+class SavedJob(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_jobs",
+    )
+
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,
+        related_name="saved_by_users",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "job"],
+                name="unique_saved_job",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user.username} saved "
+            f"{self.job.title_en}"
+        )
