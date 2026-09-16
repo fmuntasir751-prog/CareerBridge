@@ -16,6 +16,7 @@ import StudentProfile from "./pages/StudentProfile.jsx";
 import EditJob from "./pages/EditJob.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
+import StudentProgress from "./pages/StudentProgress.jsx";
 
 function App() {
   return (
@@ -75,6 +76,10 @@ function App() {
       <Route
         path="/company-analytics"
         element={<CompanyAnalytics />}
+      />
+      <Route
+        path="/student-progress"
+        element={<StudentProgress />}
       />
     </Routes>   
     

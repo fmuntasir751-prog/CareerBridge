@@ -154,6 +154,13 @@ function Dashboard() {
               >
                 {t("savedJobs")}
               </a>
+
+              <a
+                className="secondary-button"
+                href="/student-progress"
+              >
+                {t("careerProgress")}
+              </a>
             </>
           )}
 
@@ -193,12 +200,13 @@ function Dashboard() {
               >
                 {t("editCompanyProfile")}
               </a>
+
               <a
-  className="secondary-button"
-  href="/company-analytics"
->
-  {t("analytics")}
-</a>
+                className="secondary-button"
+                href="/company-analytics"
+              >
+                {t("analytics")}
+              </a>
             </>
           )}
         </div>
