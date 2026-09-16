@@ -1,30 +1,57 @@
-from rest_framework.permissions import SAFE_METHODS, BasePermission
+from rest_framework.permissions import (
+    SAFE_METHODS,
+    BasePermission,
+)
 
 
 class ApplicationPermission(BasePermission):
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
+        user = request.user
+
+        if not user.is_authenticated:
             return False
 
         if request.method in SAFE_METHODS:
-            return request.user.role in ("student", "company")
+            return user.role in ("student", "company")
 
         if request.method == "POST":
-            return request.user.role == "student"
+            return user.role == "student"
 
         if request.method in ("PUT", "PATCH"):
-            return request.user.role == "company"
+            return user.role == "company"
 
         return False
 
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            if request.user.role == "student":
-                return obj.applicant == request.user
+    def has_object_permission(
+        self,
+        request,
+        view,
+        obj,
+    ):
+        user = request.user
 
-            return obj.job.company == request.user
+        if request.method in SAFE_METHODS:
+            if user.role == "student":
+                return obj.applicant == user
+
+            if user.role == "company":
+                return obj.job.company == user
+
+            return False
+
+        if (
+            view.action == "withdraw"
+            and request.method == "POST"
+        ):
+            return (
+                user.role == "student"
+                and obj.applicant == user
+            )
 
         if request.method in ("PUT", "PATCH"):
-            return obj.job.company == request.user
+            return (
+                user.role == "company"
+                and obj.job.company == user
+            )
 
         return False
