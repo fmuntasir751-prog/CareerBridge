@@ -8,7 +8,10 @@ from rest_framework.response import Response
 from .models import Job, SavedJob
 from .permissions import IsCompanyOwnerOrReadOnly
 from .serializers import JobSerializer
+from rest_framework.exceptions import NotFound
+from profiles.models import StudentProfile
 
+from .matching import calculate_job_match
 
 class JobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
@@ -56,6 +59,57 @@ class JobViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(company=self.request.user)
 
+    
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="match-analysis",
+        permission_classes=[IsAuthenticated],
+    )
+    def match_analysis(self, request, pk=None):
+        if request.user.role != "student":
+            raise PermissionDenied(
+                "Only student accounts can view job matches."
+            )
+
+        job = self.get_object()
+
+        if not job.is_active:
+            raise NotFound(
+                "This job is no longer active."
+            )
+
+        profile, _ = StudentProfile.objects.get_or_create(
+            user=request.user,
+        )
+
+        analysis = calculate_job_match(
+            profile,
+            job,
+        )
+
+        return Response(
+            {
+                "job": {
+                    "id": job.id,
+                    "title_en": job.title_en,
+                    "title_ja": job.title_ja,
+                    "company_name": (
+                        getattr(
+                            getattr(
+                                job.company,
+                                "company_profile",
+                                None,
+                            ),
+                            "company_name",
+                            job.company.username,
+                        )
+                    ),
+                },
+                **analysis,
+            },
+            status=status.HTTP_200_OK,
+        )
     @action(
         detail=True,
         methods=["post", "delete"],

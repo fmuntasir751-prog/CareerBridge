@@ -7,7 +7,6 @@ import {
 
 import api from "../services/api";
 
-
 function JobDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -15,12 +14,16 @@ function JobDetail() {
 
   const [job, setJob] = useState(null);
   const [user, setUser] = useState(null);
+  const [matchAnalysis, setMatchAnalysis] =
+    useState(null);
+
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const isJapanese = i18n.language.startsWith("ja");
+  const isJapanese =
+    i18n.language.startsWith("ja");
 
   useEffect(() => {
     const loadPage = async () => {
@@ -44,16 +47,36 @@ function JobDetail() {
         setUser(currentUser);
 
         if (currentUser.role === "student") {
-          const savedResponse = await api.get(
-            "/jobs/saved/",
-          );
+          const [
+            savedResponse,
+            matchResponse,
+          ] = await Promise.allSettled([
+            api.get("/jobs/saved/"),
+            api.get(
+              `/jobs/${id}/match-analysis/`,
+            ),
+          ]);
 
-          const saved = savedResponse.data.some(
-            (savedJob) =>
-              Number(savedJob.id) === Number(id),
-          );
+          if (
+            savedResponse.status === "fulfilled"
+          ) {
+            const saved =
+              savedResponse.value.data.some(
+                (savedJob) =>
+                  Number(savedJob.id) ===
+                  Number(id),
+              );
 
-          setIsSaved(saved);
+            setIsSaved(saved);
+          }
+
+          if (
+            matchResponse.status === "fulfilled"
+          ) {
+            setMatchAnalysis(
+              matchResponse.value.data,
+            );
+          }
         }
       } catch {
         setUser(null);
@@ -101,12 +124,31 @@ function JobDetail() {
     } catch {
       setMessage(
         isJapanese
-          ? "求人の保存状態を変更できませんでした。"
+          ? "保存状態を更新できませんでした。"
           : "Could not update the saved job.",
       );
     } finally {
       setSaving(false);
     }
+  };
+
+  const getReadinessLabel = (readiness) => {
+    const labels = {
+      excellent: isJapanese
+        ? "非常に良いマッチ"
+        : "Excellent match",
+      strong: isJapanese
+        ? "良いマッチ"
+        : "Strong match",
+      moderate: isJapanese
+        ? "適度なマッチ"
+        : "Moderate match",
+      developing: isJapanese
+        ? "スキル向上が必要"
+        : "Developing match",
+    };
+
+    return labels[readiness] || readiness;
   };
 
   if (error) {
@@ -151,7 +193,18 @@ function JobDetail() {
       ? `¥${formatNumber(
           job.salary_min,
         )} - ¥${formatNumber(job.salary_max)}`
-      : t("notSpecified");
+      : job.salary_min
+        ? `${isJapanese ? "¥" : "From ¥"}${formatNumber(
+            job.salary_min,
+          )}`
+        : job.salary_max
+          ? `${isJapanese ? "最大 ¥" : "Up to ¥"}${formatNumber(
+              job.salary_max,
+            )}`
+          : t("notSpecified");
+
+  const recommendations =
+    matchAnalysis?.recommendations || [];
 
   return (
     <main className="job-detail-page">
@@ -169,34 +222,24 @@ function JobDetail() {
         </button>
       </header>
 
-      <section className="job-detail-content">
+      <section className="job-detail-layout">
         <div className="job-detail-main">
           <p className="eyebrow">
-            {job.company_name
-              || job.company_username
-              || "CareerBridge Company"}
+            {job.company_name}
           </p>
 
           <h1>{title}</h1>
 
-          <div className="job-meta-list">
+          <div className="job-meta">
+            <span>📍 {job.location}</span>
             <span>
-              {t("location")}: {job.location}
+              💼 {job.employment_type}
             </span>
-
             <span>
-              {t("employmentType")}:{" "}
-              {job.employment_type}
+              🏢 {job.workplace_type}
             </span>
-
             <span>
-              {t("workplaceType")}:{" "}
-              {job.workplace_type}
-            </span>
-
-            <span>
-              {t("japaneseLevel")}:{" "}
-              {job.japanese_level}
+              🗣️ {job.japanese_level}
             </span>
           </div>
 
@@ -207,12 +250,176 @@ function JobDetail() {
 
           <section>
             <h2>{t("requirements")}</h2>
-
             <p>
-              {job.requirements
-                || t("notSpecified")}
+              {job.requirements ||
+                t("notSpecified")}
             </p>
           </section>
+
+          {user?.role === "student" &&
+            matchAnalysis && (
+              <section className="job-match-analysis">
+                <div className="job-match-heading">
+                  <div
+                    className="job-match-score"
+                    aria-label={`Match score ${matchAnalysis.match_score}%`}
+                  >
+                    <strong>
+                      {matchAnalysis.match_score}%
+                    </strong>
+
+                    <small>
+                      {isJapanese
+                        ? "マッチ"
+                        : "Match"}
+                    </small>
+                  </div>
+
+                  <div>
+                    <p className="eyebrow">
+                      {isJapanese
+                        ? "プロフィール分析"
+                        : "Profile analysis"}
+                    </p>
+
+                    <h2>
+                      {getReadinessLabel(
+                        matchAnalysis.readiness,
+                      )}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="job-match-columns">
+                  <div>
+                    <h3>
+                      {isJapanese
+                        ? "一致するスキル"
+                        : "Matching skills"}
+                    </h3>
+
+                    <div className="skill-chip-list">
+                      {matchAnalysis
+                        .matching_skills?.length >
+                      0 ? (
+                        matchAnalysis.matching_skills.map(
+                          (skill) => (
+                            <span
+                              className="skill-chip matched"
+                              key={skill}
+                            >
+                              ✓ {skill}
+                            </span>
+                          ),
+                        )
+                      ) : (
+                        <p>
+                          {isJapanese
+                            ? "一致するスキルはまだありません。"
+                            : "No matching skills found yet."}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3>
+                      {isJapanese
+                        ? "不足しているスキル"
+                        : "Skills to improve"}
+                    </h3>
+
+                    <div className="skill-chip-list">
+                      {matchAnalysis
+                        .missing_skills?.length >
+                      0 ? (
+                        matchAnalysis.missing_skills.map(
+                          (skill) => (
+                            <span
+                              className="skill-chip missing"
+                              key={skill}
+                            >
+                              + {skill}
+                            </span>
+                          ),
+                        )
+                      ) : (
+                        <p>
+                          {isJapanese
+                            ? "主要なスキルを満たしています。"
+                            : "You meet the main skill requirements."}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="match-condition-grid">
+                  <span>
+                    {matchAnalysis.location_match
+                      ? "✓"
+                      : "○"}{" "}
+                    {isJapanese
+                      ? "勤務地"
+                      : "Location"}
+                  </span>
+
+                  <span>
+                    {matchAnalysis.workplace_match
+                      ? "✓"
+                      : "○"}{" "}
+                    {isJapanese
+                      ? "勤務形態"
+                      : "Workplace"}
+                  </span>
+
+                  <span>
+                    {matchAnalysis.japanese_match
+                      ? "✓"
+                      : "○"}{" "}
+                    {isJapanese
+                      ? "日本語レベル"
+                      : "Japanese level"}
+                  </span>
+
+                  <span>
+                    {matchAnalysis.salary_match
+                      ? "✓"
+                      : "○"}{" "}
+                    {isJapanese
+                      ? "希望給与"
+                      : "Salary"}
+                  </span>
+                </div>
+
+                {recommendations.length > 0 && (
+                  <div className="match-recommendations">
+                    <h3>
+                      {isJapanese
+                        ? "おすすめの改善点"
+                        : "Recommendations"}
+                    </h3>
+
+                    <ol>
+                      {recommendations.map(
+                        (recommendation, index) => (
+                          <li key={`${recommendation}-${index}`}>
+                            {typeof recommendation ===
+                            "object"
+                              ? isJapanese
+                                ? recommendation.ja ||
+                                  recommendation.en
+                                : recommendation.en ||
+                                  recommendation.ja
+                              : recommendation}
+                          </li>
+                        ),
+                      )}
+                    </ol>
+                  </div>
+                )}
+              </section>
+            )}
         </div>
 
         <aside className="job-detail-sidebar">
@@ -222,45 +429,36 @@ function JobDetail() {
           <hr />
 
           <h3>{t("deadline")}</h3>
-
           <p>
-            {job.deadline
-              || t("notSpecified")}
+            {job.deadline ||
+              t("notSpecified")}
           </p>
-
-          {message && (
-            <div className="job-save-message">
-              {message}
-            </div>
-          )}
 
           {user?.role === "student" && (
             <>
+              {message && (
+                <p className="job-save-message">
+                  {message}
+                </p>
+              )}
+
               <button
                 className="save-job-button"
                 type="button"
-                onClick={toggleSavedJob}
                 disabled={saving}
+                onClick={toggleSavedJob}
               >
                 {saving
-                  ? (
-                    isJapanese
-                      ? "処理中..."
-                      : "Saving..."
-                  )
-                  : (
-                    isSaved
-                      ? (
-                        isJapanese
-                          ? "保存済み"
-                          : "Saved"
-                      )
-                      : (
-                        isJapanese
-                          ? "求人を保存"
-                          : "Save job"
-                      )
-                  )}
+                  ? isJapanese
+                    ? "更新中..."
+                    : "Saving..."
+                  : isSaved
+                    ? isJapanese
+                      ? "保存済み"
+                      : "Saved"
+                    : isJapanese
+                      ? "求人を保存"
+                      : "Save job"}
               </button>
 
               <button
@@ -288,11 +486,24 @@ function JobDetail() {
                 : "Log in to apply"}
             </button>
           )}
+
+          {user?.role === "company" && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() =>
+                navigate("/dashboard")
+              }
+            >
+              {isJapanese
+                ? "ダッシュボードへ"
+                : "Go to dashboard"}
+            </button>
+          )}
         </aside>
       </section>
     </main>
   );
 }
-
 
 export default JobDetail;
