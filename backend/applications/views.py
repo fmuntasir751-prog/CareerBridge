@@ -7,6 +7,7 @@ from rest_framework.parsers import (
     MultiPartParser,
 )
 from rest_framework.response import Response
+
 from notifications.models import Notification
 
 from .models import Application
@@ -42,10 +43,14 @@ class ApplicationViewSet(
         )
 
         if user.role == "student":
-            return queryset.filter(applicant=user)
+            return queryset.filter(
+                applicant=user,
+            )
 
         if user.role == "company":
-            return queryset.filter(job__company=user)
+            return queryset.filter(
+                job__company=user,
+            )
 
         return queryset.none()
 
@@ -74,32 +79,37 @@ class ApplicationViewSet(
             applicant=user,
             status=Application.Status.PENDING,
         )
+
     def perform_update(self, serializer):
-        previous_status = serializer.instance.status
+        previous_status = (
+            serializer.instance.status
+        )
+
         application = serializer.save()
 
         if previous_status == application.status:
             return
 
         status_labels_en = {
-            "pending": "Pending",
-            "reviewing": "Reviewing",
-            "interview": "Interview",
-            "accepted": "Accepted",
-            "rejected": "Rejected",
-            "withdrawn": "Withdrawn",
+            Application.Status.PENDING: "Pending",
+            Application.Status.REVIEWING: "Reviewing",
+            Application.Status.INTERVIEW: "Interview",
+            Application.Status.ACCEPTED: "Accepted",
+            Application.Status.REJECTED: "Rejected",
+            Application.Status.WITHDRAWN: "Withdrawn",
         }
 
         status_labels_ja = {
-            "pending": "応募済み",
-            "reviewing": "選考中",
-            "interview": "面接",
-            "accepted": "採用",
-            "rejected": "不採用",
-            "withdrawn": "辞退",
+            Application.Status.PENDING: "応募済み",
+            Application.Status.REVIEWING: "選考中",
+            Application.Status.INTERVIEW: "面接",
+            Application.Status.ACCEPTED: "採用",
+            Application.Status.REJECTED: "不採用",
+            Application.Status.WITHDRAWN: "辞退",
         }
 
         job_title_en = application.job.title_en
+
         job_title_ja = (
             application.job.title_ja
             or application.job.title_en
@@ -121,7 +131,9 @@ class ApplicationViewSet(
             notification_type=(
                 Notification.Type.APPLICATION_STATUS
             ),
-            title_en="Application status updated",
+            title_en=(
+                "Application status updated"
+            ),
             title_ja="応募状況が更新されました",
             message_en=(
                 f'Your application for "{job_title_en}" '
@@ -132,6 +144,7 @@ class ApplicationViewSet(
                 f"「{status_ja}」に更新されました。"
             ),
         )
+
     @action(
         detail=True,
         methods=["post"],
@@ -140,7 +153,10 @@ class ApplicationViewSet(
     def withdraw(self, request, pk=None):
         application = self.get_object()
 
-        if application.status == Application.Status.WITHDRAWN:
+        if (
+            application.status
+            == Application.Status.WITHDRAWN
+        ):
             raise ValidationError(
                 "This application is already withdrawn."
             )
@@ -150,10 +166,13 @@ class ApplicationViewSet(
             Application.Status.REJECTED,
         ):
             raise ValidationError(
-                "A completed application cannot be withdrawn."
+                "A completed application cannot be "
+                "withdrawn."
             )
 
-        application.status = Application.Status.WITHDRAWN
+        application.status = (
+            Application.Status.WITHDRAWN
+        )
 
         application.save(
             update_fields=[
