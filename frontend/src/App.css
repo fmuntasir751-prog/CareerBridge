@@ -1714,3 +1714,224 @@
     grid-template-columns: 1fr;
   }
 }
+/* Dashboard recommended jobs */
+
+.recommended-jobs-section {
+  margin-top: 38px;
+  padding: 28px;
+  border: 1px solid #dce4ef;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #f1f5ff 100%
+    );
+  box-shadow: 0 15px 38px rgb(15 23 42 / 8%);
+}
+
+.recommended-jobs-heading {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.recommended-jobs-heading .eyebrow {
+  margin: 0 0 7px;
+}
+
+.recommended-jobs-heading h2 {
+  margin: 0;
+  color: #102044;
+  font-size: clamp(25px, 3vw, 34px);
+}
+
+.recommended-jobs-heading p:not(.eyebrow) {
+  margin: 9px 0 0;
+  color: #64748b;
+}
+
+.recommended-jobs-heading .secondary-button {
+  flex-shrink: 0;
+}
+
+.recommended-jobs-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.recommended-job-card {
+  display: flex;
+  min-width: 0;
+  padding: 21px;
+  border: 1px solid #dce4ef;
+  border-radius: 17px;
+  background: #ffffff;
+  flex-direction: column;
+  box-shadow: 0 8px 22px rgb(15 23 42 / 6%);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.recommended-job-card:hover {
+  border-color: #9db3ff;
+  box-shadow: 0 15px 30px rgb(49 94 251 / 13%);
+  transform: translateY(-4px);
+}
+
+.recommended-job-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recommendation-rank {
+  display: inline-flex;
+  min-width: 42px;
+  min-height: 34px;
+  padding: 6px 11px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e9efff;
+  color: #315efb;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.recommendation-score {
+  display: flex;
+  width: 67px;
+  height: 67px;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid #dce6ff;
+  border-top-color: #315efb;
+  border-right-color: #4f46e5;
+  border-radius: 50%;
+  background: #ffffff;
+  flex-direction: column;
+}
+
+.recommendation-score strong {
+  color: #17377d;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.recommendation-score small {
+  margin-top: 4px;
+  color: #71819a;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.recommended-job-card h3 {
+  margin: 17px 0 7px;
+  color: #102044;
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+.recommended-company {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.recommended-job-meta {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 17px;
+  flex-direction: column;
+}
+
+.recommended-job-meta span {
+  color: #526683;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.recommended-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 19px;
+}
+
+.recommended-skill-list span {
+  display: inline-flex;
+  padding: 6px 9px;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.recommended-job-button {
+  width: 100%;
+  min-height: 45px;
+  margin-top: auto;
+  padding: 10px 13px;
+  border: none;
+  border-radius: 11px;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #4f46e5
+    );
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recommended-job-button:hover {
+  filter: brightness(1.06);
+}
+
+.recommended-jobs-error {
+  margin: 0;
+  padding: 13px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+@media (max-width: 950px) {
+  .recommended-jobs-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .recommended-jobs-section {
+    padding: 21px 16px;
+  }
+
+  .recommended-jobs-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recommended-jobs-heading .secondary-button {
+    width: 100%;
+  }
+
+  .recommended-jobs-grid {
+    grid-template-columns: 1fr;
+  }
+}

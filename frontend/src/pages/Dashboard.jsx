@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import Chatbot from "../components/Chatbot";
+import RecommendedJobs from "../components/RecommendedJobs";
 import api from "../services/api";
 
 function Dashboard() {
@@ -261,7 +262,9 @@ function Dashboard() {
               </button>
             </section>
           )}
-
+        {user.role === "student" && (
+          <RecommendedJobs />
+        )}
         <div className="profile-summary">
           <article>
             <small>{t("username")}</small>
