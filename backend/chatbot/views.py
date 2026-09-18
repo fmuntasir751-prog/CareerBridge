@@ -3,6 +3,7 @@ import re
 
 from django.db.models import Q
 from google import genai
+from google.genai import types
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -618,9 +619,7 @@ def generate_gemini_response(
     message,
     language,
 ):
-    api_key = os.getenv(
-        "GEMINI_API_KEY",
-    )
+    api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
         return None
@@ -643,11 +642,8 @@ Rules:
   programming skills and working in Japan.
 - Keep the answer concise and easy to understand.
 - Use plain text only.
-- Do not use Markdown symbols such as headings, asterisks,
-  horizontal lines or backticks.
+- Do not use Markdown symbols.
 - Use short numbered sections and simple line breaks.
-- Do not claim that you searched live job websites.
-- Put every numbered section on a new line.
 - Add one blank line between sections.
 
 User question:
@@ -657,22 +653,24 @@ User question:
     try:
         client = genai.Client(
             api_key=api_key,
+            http_options=types.HttpOptions(
+                timeout=25000,
+            ),
         )
 
-        interaction = (
-            client.interactions.create(
-                model="gemini-3.8-flash",
-                input=prompt,
-            )
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
         )
 
-        answer = interaction.output_text
+        if response.text:
+            return response.text.strip()
 
-        if answer:
-            return answer.strip()
-
-    except Exception:
-        return None
+    except Exception as error:
+        print(
+            f"Gemini request failed: {error}",
+            flush=True,
+        )
 
     return None
 
