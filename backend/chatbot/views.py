@@ -650,7 +650,7 @@ User question:
 {message}
 """
 
-    try:
+        try:
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
@@ -658,13 +658,15 @@ User question:
             ),
         )
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
+        interaction = client.interactions.create(
+            model="gemini-3.6-flash",
+            input=prompt,
         )
 
-        if response.text:
-            return response.text.strip()
+        answer = interaction.output_text
+
+        if answer:
+            return answer.strip()
 
     except Exception as error:
         print(
