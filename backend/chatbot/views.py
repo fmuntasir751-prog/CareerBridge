@@ -650,7 +650,7 @@ User question:
 {message}
 """
 
-        try:
+    try:
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
@@ -674,7 +674,7 @@ User question:
             flush=True,
         )
 
-    return None
+    return None  
 
 
 def generate_career_response(
