@@ -134,5 +134,14 @@
 "viewCurrentResume": "View current resume",
 "savedJobs": "Saved jobs",
 "analytics": "Analytics",
-"careerProgress": "Career progress"
+"careerProgress": "Career progress",
+"verifyEmail": "Verify your email",
+"verifyEmailMessage": "Enter the 6-digit code sent to your email address.",
+"verificationCode": "Verification code",
+"verifying": "Verifying...",
+"emailVerificationSuccess": "Your email was verified successfully. You can now log in.",
+"resendCode": "Resend code",
+"sendingCode": "Sending code...",
+"verificationCodeResent": "A new verification code was sent to your email.",
+"backToLogin": "Back to login"
 }

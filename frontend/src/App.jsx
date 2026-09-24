@@ -17,6 +17,7 @@ import EditJob from "./pages/EditJob.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
 import StudentProgress from "./pages/StudentProgress.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
 
 function App() {
   return (
@@ -80,6 +81,10 @@ function App() {
       <Route
         path="/student-progress"
         element={<StudentProgress />}
+      />
+      <Route
+        path="/verify-email"
+        element={<VerifyEmail />}
       />
     </Routes>   
     

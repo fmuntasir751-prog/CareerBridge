@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import api from "../services/api";
 
@@ -16,13 +17,16 @@ const initialForm = {
 
 function Register() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     ...initialForm,
-    preferred_language: i18n.language === "ja" ? "ja" : "en",
+    preferred_language: i18n.language.startsWith("ja")
+      ? "ja"
+      : "en",
   });
+
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
@@ -34,27 +38,40 @@ function Register() {
     }));
   };
 
+  const getErrorMessage = (requestError) => {
+    const responseData = requestError.response?.data;
+
+    if (!responseData) {
+      return t("serverError");
+    }
+
+    if (typeof responseData === "string") {
+      return responseData;
+    }
+
+    return Object.values(responseData)
+      .flat()
+      .join(" ");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
-      await api.post("/auth/register/", form);
-      setSuccess(t("registrationSuccess"));
-      setForm(initialForm);
-    } catch (requestError) {
-      const responseData = requestError.response?.data;
+      const response = await api.post(
+        "/auth/register/",
+        form,
+      );
 
-      if (responseData) {
-        const messages = Object.values(responseData)
-          .flat()
-          .join(" ");
-        setError(messages);
-      } else {
-        setError(t("serverError"));
-      }
+      navigate("/verify-email", {
+        state: {
+          email: response.data.email,
+        },
+      });
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
@@ -69,12 +86,21 @@ function Register() {
         </a>
 
         <h1>{t("createAccount")}</h1>
-        <p className="auth-subtitle">{t("registerMessage")}</p>
 
-        {error && <div className="form-message error">{error}</div>}
-        {success && <div className="form-message success">{success}</div>}
+        <p className="auth-subtitle">
+          {t("registerMessage")}
+        </p>
 
-        <form className="register-form" onSubmit={handleSubmit}>
+        {error && (
+          <div className="form-message error">
+            {error}
+          </div>
+        )}
+
+        <form
+          className="register-form"
+          onSubmit={handleSubmit}
+        >
           <div className="form-row">
             <label>
               {t("firstName")}
@@ -82,6 +108,7 @@ function Register() {
                 name="first_name"
                 value={form.first_name}
                 onChange={handleChange}
+                autoComplete="given-name"
                 required
               />
             </label>
@@ -92,6 +119,7 @@ function Register() {
                 name="last_name"
                 value={form.last_name}
                 onChange={handleChange}
+                autoComplete="family-name"
                 required
               />
             </label>
@@ -103,6 +131,7 @@ function Register() {
               name="username"
               value={form.username}
               onChange={handleChange}
+              autoComplete="username"
               required
             />
           </label>
@@ -114,6 +143,7 @@ function Register() {
               name="email"
               value={form.email}
               onChange={handleChange}
+              autoComplete="email"
               required
             />
           </label>
@@ -126,8 +156,13 @@ function Register() {
                 value={form.role}
                 onChange={handleChange}
               >
-                <option value="student">{t("student")}</option>
-                <option value="company">{t("company")}</option>
+                <option value="student">
+                  {t("student")}
+                </option>
+
+                <option value="company">
+                  {t("company")}
+                </option>
               </select>
             </label>
 
@@ -138,8 +173,13 @@ function Register() {
                 value={form.preferred_language}
                 onChange={handleChange}
               >
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
+                <option value="en">
+                  English
+                </option>
+
+                <option value="ja">
+                  日本語
+                </option>
               </select>
             </label>
           </div>
@@ -151,6 +191,7 @@ function Register() {
               name="password"
               value={form.password}
               onChange={handleChange}
+              autoComplete="new-password"
               required
             />
           </label>
@@ -162,6 +203,7 @@ function Register() {
               name="password_confirm"
               value={form.password_confirm}
               onChange={handleChange}
+              autoComplete="new-password"
               required
             />
           </label>
@@ -171,7 +213,9 @@ function Register() {
             type="submit"
             disabled={loading}
           >
-            {loading ? t("creating") : t("createAccount")}
+            {loading
+              ? t("creating")
+              : t("createAccount")}
           </button>
         </form>
 

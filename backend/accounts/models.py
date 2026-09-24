@@ -26,5 +26,21 @@ class User(AbstractUser):
         default=Language.ENGLISH,
     )
 
+    email_verified = models.BooleanField(default=False)
+
+    email_otp = models.CharField(
+        max_length=128,
+        blank=True,
+    )
+
+    email_otp_created_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    email_otp_attempts = models.PositiveSmallIntegerField(
+        default=0,
+    )
+
     def __str__(self):
         return self.email

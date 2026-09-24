@@ -255,15 +255,33 @@ EMAIL_BACKEND = os.environ.get(
     ),
 )
 
-
-SECURE_PROXY_SSL_HEADER = (
-    "HTTP_X_FORWARDED_PROTO",
-    "https",
+EMAIL_HOST = os.environ.get(
+    "EMAIL_HOST",
+    "smtp.gmail.com",
 )
 
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-SECURE_SSL_REDIRECT = get_boolean_environment(
-    "DJANGO_SECURE_SSL_REDIRECT",
-    default=False,
+EMAIL_PORT = int(
+    os.environ.get("EMAIL_PORT", "587"),
 )
+
+EMAIL_USE_TLS = get_boolean_environment(
+    "EMAIL_USE_TLS",
+    default=True,
+)
+
+EMAIL_HOST_USER = os.environ.get(
+    "EMAIL_HOST_USER",
+    "",
+)
+
+EMAIL_HOST_PASSWORD = os.environ.get(
+    "EMAIL_HOST_PASSWORD",
+    "",
+)
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "CareerBridge <noreply@careerbridge.local>",
+)
+
+EMAIL_TIMEOUT = 15

@@ -2146,3 +2146,19 @@
     width: 100%;
   }
 }
+.otp-input {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.45rem;
+  text-align: center;
+}
+
+.otp-resend-button {
+  width: 100%;
+  margin-top: 0.85rem;
+}
+
+.otp-resend-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
