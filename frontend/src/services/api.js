@@ -4,6 +4,21 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "http://127.0.0.1:8000/api";
 
+const PUBLIC_AUTH_PATHS = [
+  "/auth/register/",
+  "/auth/login/",
+  "/auth/token/refresh/",
+  "/auth/verify-email/",
+  "/auth/resend-verification/",
+  "/auth/password-reset/request/",
+  "/auth/password-reset/confirm/",
+];
+
+const isPublicAuthRequest = (config) =>
+  PUBLIC_AUTH_PATHS.some((path) =>
+    config?.url?.startsWith(path),
+  );
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -16,9 +31,14 @@ api.interceptors.request.use((config) => {
     "careerbridge-access",
   );
 
-  if (accessToken) {
+  if (
+    accessToken &&
+    !isPublicAuthRequest(config)
+  ) {
     config.headers.Authorization =
       `Bearer ${accessToken}`;
+  } else {
+    delete config.headers.Authorization;
   }
 
   return config;
@@ -29,6 +49,12 @@ api.interceptors.response.use(
 
   async (error) => {
     const originalRequest = error.config;
+
+    if (
+      isPublicAuthRequest(originalRequest)
+    ) {
+      return Promise.reject(error);
+    }
 
     const refreshToken = localStorage.getItem(
       "careerbridge-refresh",
@@ -62,16 +88,21 @@ api.interceptors.response.use(
           `Bearer ${newAccessToken}`;
 
         return api(originalRequest);
-      } catch {
+      } catch (refreshError) {
         localStorage.removeItem(
           "careerbridge-access",
         );
-
         localStorage.removeItem(
           "careerbridge-refresh",
         );
 
-        window.location.href = "/login";
+        if (
+          window.location.pathname !== "/login"
+        ) {
+          window.location.href = "/login";
+        }
+
+        return Promise.reject(refreshError);
       }
     }
 
