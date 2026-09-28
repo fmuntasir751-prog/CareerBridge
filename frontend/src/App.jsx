@@ -24,6 +24,7 @@ import SavedJobs from "./pages/SavedJobs.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import StudentProgress from "./pages/StudentProgress.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
 function App() {
   return (
@@ -125,7 +126,8 @@ function App() {
             element={<CompanyAnalytics />}
           />
         </Route>
-      </Route>
+       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

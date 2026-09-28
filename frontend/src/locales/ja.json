@@ -152,5 +152,7 @@
   "newPassword": "新しいパスワード",
   "confirmNewPassword": "新しいパスワードの確認",
   "resettingPassword": "パスワードを再設定しています...",
-  "resetPassword": "パスワードを再設定"
+  "resetPassword": "パスワードを再設定",
+  "pageNotFound": "ページが見つかりません",
+"pageNotFoundMessage": "お探しのページは存在しないか、移動された可能性があります。"
 }

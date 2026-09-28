@@ -2174,3 +2174,32 @@
 .forgot-password-link:hover {
   text-decoration: underline;
 }
+.not-found-card {
+  text-align: center;
+}
+
+.not-found-card .auth-brand {
+  justify-content: center;
+}
+
+.error-code {
+  margin: 32px 0 8px;
+  color: #315efb;
+  font-size: clamp(5rem, 15vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.08em;
+}
+
+.not-found-card h1 {
+  margin-bottom: 12px;
+}
+
+.home-button {
+  display: inline-flex;
+  width: auto;
+  min-width: 180px;
+  margin-top: 24px;
+  justify-content: center;
+  text-decoration: none;
+}

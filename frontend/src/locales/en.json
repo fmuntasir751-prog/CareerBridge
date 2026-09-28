@@ -152,5 +152,7 @@
   "newPassword": "New password",
   "confirmNewPassword": "Confirm new password",
   "resettingPassword": "Resetting password...",
-  "resetPassword": "Reset password"
+  "resetPassword": "Reset password",
+  "pageNotFound": "Page not found",
+"pageNotFoundMessage": "The page you are looking for does not exist or may have been moved."
 }
