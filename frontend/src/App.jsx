@@ -3,6 +3,8 @@ import "./App.css";
 import { Route, Routes } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import RoleRoute from "./components/RoleRoute.jsx";
+
 import Applications from "./pages/Applications.jsx";
 import ApplyJob from "./pages/ApplyJob.jsx";
 import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
@@ -30,70 +32,99 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
+
       <Route
         path="/verify-email"
         element={<VerifyEmail />}
       />
+
       <Route
         path="/forgot-password"
         element={<ForgotPassword />}
       />
+
       <Route path="/jobs" element={<Jobs />} />
+
       <Route
         path="/jobs/:id"
         element={<JobDetail />}
       />
 
-      {/* Login required */}
+      {/* All authenticated users */}
       <Route element={<ProtectedRoute />}>
         <Route
           path="/dashboard"
           element={<Dashboard />}
         />
-        <Route
-          path="/profile"
-          element={<StudentProfile />}
-        />
-        <Route
-          path="/company-profile"
-          element={<CompanyProfile />}
-        />
-        <Route
-          path="/saved-jobs"
-          element={<SavedJobs />}
-        />
-        <Route
-          path="/jobs/new"
-          element={<CreateJob />}
-        />
-        <Route
-          path="/jobs/:id/apply"
-          element={<ApplyJob />}
-        />
-        <Route
-          path="/my-jobs"
-          element={<MyJobs />}
-        />
-        <Route
-          path="/jobs/:id/edit"
-          element={<EditJob />}
-        />
+
         <Route
           path="/applications"
           element={<Applications />}
         />
+
         <Route
           path="/notifications"
           element={<Notifications />}
         />
+
+        {/* Student-only routes */}
         <Route
-          path="/company-analytics"
-          element={<CompanyAnalytics />}
-        />
+          element={
+            <RoleRoute allowedRoles={["student"]} />
+          }
+        >
+          <Route
+            path="/profile"
+            element={<StudentProfile />}
+          />
+
+          <Route
+            path="/saved-jobs"
+            element={<SavedJobs />}
+          />
+
+          <Route
+            path="/jobs/:id/apply"
+            element={<ApplyJob />}
+          />
+
+          <Route
+            path="/student-progress"
+            element={<StudentProgress />}
+          />
+        </Route>
+
+        {/* Company-only routes */}
         <Route
-          path="/student-progress"
-          element={<StudentProgress />}
-        />
+          element={
+            <RoleRoute allowedRoles={["company"]} />
+          }
+        >
+          <Route
+            path="/company-profile"
+            element={<CompanyProfile />}
+          />
+
+          <Route
+            path="/jobs/new"
+            element={<CreateJob />}
+          />
+
+          <Route
+            path="/my-jobs"
+            element={<MyJobs />}
+          />
+
+          <Route
+            path="/jobs/:id/edit"
+            element={<EditJob />}
+          />
+
+          <Route
+            path="/company-analytics"
+            element={<CompanyAnalytics />}
+          />
+        </Route>
       </Route>
     </Routes>
   );
