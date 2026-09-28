@@ -85,7 +85,12 @@ function Login() {
               required
             />
           </label>
-
+          <a
+            href="/forgot-password"
+            className="forgot-password-link"
+          >
+            {t("forgotPassword")}
+          </a>
           <button
             className="submit-button"
             type="submit"

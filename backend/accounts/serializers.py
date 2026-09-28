@@ -1,12 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.password_validation import (
+    validate_password,
+)
 from rest_framework import serializers
 
 from .services import (
     OTP_MAX_ATTEMPTS,
     create_and_send_email_otp,
+    create_and_send_password_reset_otp,
     otp_has_expired,
+    password_reset_otp_can_be_resent,
+    password_reset_otp_has_expired,
 )
 
 User = get_user_model()
@@ -17,7 +22,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         write_only=True,
         validators=[validate_password],
     )
-    password_confirm = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(
+        write_only=True,
+    )
 
     class Meta:
         model = User
@@ -37,13 +44,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_role(self, value):
         if value == User.Role.ADMIN:
             raise serializers.ValidationError(
-                "Admin accounts cannot be created from registration."
+                "Admin accounts cannot be created "
+                "from registration."
             )
 
         return value
 
     def validate(self, attrs):
-        if attrs["password"] != attrs["password_confirm"]:
+        if (
+            attrs["password"]
+            != attrs["password_confirm"]
+        ):
             raise serializers.ValidationError(
                 {
                     "password_confirm": (
@@ -87,7 +98,8 @@ class EmailOTPVerificationSerializer(
             )
         except User.DoesNotExist:
             raise serializers.ValidationError(
-                "Invalid email address or verification code.",
+                "Invalid email address or "
+                "verification code.",
             )
 
         if user.email_verified:
@@ -95,14 +107,19 @@ class EmailOTPVerificationSerializer(
                 "This email address is already verified.",
             )
 
-        if user.email_otp_attempts >= OTP_MAX_ATTEMPTS:
+        if (
+            user.email_otp_attempts
+            >= OTP_MAX_ATTEMPTS
+        ):
             raise serializers.ValidationError(
-                "Too many incorrect attempts. Request a new code.",
+                "Too many incorrect attempts. "
+                "Request a new code.",
             )
 
         if otp_has_expired(user):
             raise serializers.ValidationError(
-                "The verification code has expired. Request a new code.",
+                "The verification code has expired. "
+                "Request a new code.",
             )
 
         if not check_password(
@@ -123,7 +140,8 @@ class EmailOTPVerificationSerializer(
                 {
                     "otp": (
                         "Incorrect verification code. "
-                        f"{remaining_attempts} attempts remaining."
+                        f"{remaining_attempts} "
+                        "attempts remaining."
                     ),
                 },
             )
@@ -163,7 +181,8 @@ class ResendEmailOTPSerializer(serializers.Serializer):
             )
         except User.DoesNotExist:
             raise serializers.ValidationError(
-                "No account was found with this email address.",
+                "No account was found with this "
+                "email address.",
             )
 
         if user.email_verified:
@@ -177,6 +196,137 @@ class ResendEmailOTPSerializer(serializers.Serializer):
     def save(self):
         user = self.context["otp_user"]
         create_and_send_email_otp(user)
+        return user
+
+
+class PasswordResetRequestSerializer(
+    serializers.Serializer,
+):
+    email = serializers.EmailField()
+
+    def save(self):
+        email = self.validated_data["email"]
+
+        user = User.objects.filter(
+            email__iexact=email,
+            is_active=True,
+            email_verified=True,
+        ).first()
+
+        # Do not reveal whether an account exists.
+        if (
+            user
+            and password_reset_otp_can_be_resent(user)
+        ):
+            create_and_send_password_reset_otp(user)
+
+        return user
+
+
+class PasswordResetConfirmSerializer(
+    serializers.Serializer,
+):
+    email = serializers.EmailField()
+    otp = serializers.CharField(
+        min_length=6,
+        max_length=6,
+        trim_whitespace=True,
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password],
+    )
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+    )
+
+    def validate(self, attrs):
+        if (
+            attrs["new_password"]
+            != attrs["new_password_confirm"]
+        ):
+            raise serializers.ValidationError(
+                {
+                    "new_password_confirm": (
+                        "Passwords do not match."
+                    ),
+                },
+            )
+
+        user = User.objects.filter(
+            email__iexact=attrs["email"],
+            is_active=True,
+            email_verified=True,
+        ).first()
+
+        if not user:
+            raise serializers.ValidationError(
+                "Invalid email address or reset code.",
+            )
+
+        if (
+            user.password_reset_otp_attempts
+            >= OTP_MAX_ATTEMPTS
+        ):
+            raise serializers.ValidationError(
+                "Too many incorrect attempts. "
+                "Request a new reset code.",
+            )
+
+        if password_reset_otp_has_expired(user):
+            raise serializers.ValidationError(
+                "The reset code has expired. "
+                "Request a new code.",
+            )
+
+        if not check_password(
+            attrs["otp"],
+            user.password_reset_otp,
+        ):
+            user.password_reset_otp_attempts += 1
+            user.save(
+                update_fields=[
+                    "password_reset_otp_attempts",
+                ],
+            )
+
+            remaining_attempts = (
+                OTP_MAX_ATTEMPTS
+                - user.password_reset_otp_attempts
+            )
+
+            raise serializers.ValidationError(
+                {
+                    "otp": (
+                        "Incorrect reset code. "
+                        f"{remaining_attempts} "
+                        "attempts remaining."
+                    ),
+                },
+            )
+
+        attrs["user"] = user
+        return attrs
+
+    def save(self):
+        user = self.validated_data["user"]
+
+        user.set_password(
+            self.validated_data["new_password"]
+        )
+        user.password_reset_otp = ""
+        user.password_reset_otp_created_at = None
+        user.password_reset_otp_attempts = 0
+
+        user.save(
+            update_fields=[
+                "password",
+                "password_reset_otp",
+                "password_reset_otp_created_at",
+                "password_reset_otp_attempts",
+            ],
+        )
+
         return user
 
 

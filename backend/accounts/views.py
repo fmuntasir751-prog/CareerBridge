@@ -1,11 +1,16 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+)
 from rest_framework.response import Response
 
 from .serializers import (
     EmailOTPVerificationSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     RegisterSerializer,
     ResendEmailOTPSerializer,
     UserSerializer,
@@ -90,6 +95,55 @@ class ResendEmailOTPView(generics.GenericAPIView):
                 "detail": (
                     "A new verification code "
                     "was sent to your email."
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetRequestView(
+    generics.GenericAPIView,
+):
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "detail": (
+                    "If a verified account exists for "
+                    "this email address, a password "
+                    "reset code has been sent."
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(
+    generics.GenericAPIView,
+):
+    serializer_class = PasswordResetConfirmSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "detail": (
+                    "Your password was reset successfully. "
+                    "You can now log in."
                 ),
             },
             status=status.HTTP_200_OK,

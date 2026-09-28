@@ -18,7 +18,7 @@ import Notifications from "./pages/Notifications.jsx";
 import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
 import StudentProgress from "./pages/StudentProgress.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
-
+import ForgotPassword from "./pages/ForgotPassword.jsx";
 function App() {
   return (
     <Routes>
@@ -85,6 +85,10 @@ function App() {
       <Route
         path="/verify-email"
         element={<VerifyEmail />}
+      />
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword />}
       />
     </Routes>   
     

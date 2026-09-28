@@ -143,5 +143,14 @@
 "resendCode": "Resend code",
 "sendingCode": "Sending code...",
 "verificationCodeResent": "A new verification code was sent to your email.",
-"backToLogin": "Back to login"
+"backToLogin": "Back to login",
+  "forgotPassword": "Forgot password?",
+  "forgotPasswordTitle": "Reset your password",
+  "forgotPasswordMessage": "Enter your verified email address to receive a reset code.",
+  "resetPasswordMessage": "Enter the 6-digit code and choose a new password.",
+  "sendResetCode": "Send reset code",
+  "newPassword": "New password",
+  "confirmNewPassword": "Confirm new password",
+  "resettingPassword": "Resetting password...",
+  "resetPassword": "Reset password"
 }

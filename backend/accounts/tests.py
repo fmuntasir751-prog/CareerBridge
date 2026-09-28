@@ -225,3 +225,152 @@ class EmailOTPAPITestCase(APITestCase):
             response.status_code,
             status.HTTP_401_UNAUTHORIZED,
         )
+        from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.core import mail
+from django.test import TestCase, override_settings
+from rest_framework.test import APIClient
+
+
+User = get_user_model()
+
+
+@override_settings(
+    EMAIL_BACKEND=(
+        "django.core.mail.backends.locmem.EmailBackend"
+    ),
+    BREVO_API_KEY="",
+)
+class PasswordResetAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="reset_test_user",
+            email="reset_test@example.com",
+            password="OldCareerBridge@Test123",
+            is_active=True,
+            email_verified=True,
+        )
+
+    @patch(
+        "accounts.services.generate_otp",
+        return_value="654321",
+    )
+    def test_password_reset_request_sends_code(
+        self,
+        mocked_generate_otp,
+    ):
+        response = self.client.post(
+            "/api/auth/password-reset/request/",
+            {
+                "email": self.user.email,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("654321", mail.outbox[0].body)
+        mocked_generate_otp.assert_called_once()
+
+    @patch(
+        "accounts.services.generate_otp",
+        return_value="654321",
+    )
+    def test_correct_code_resets_password(
+        self,
+        mocked_generate_otp,
+    ):
+        self.client.post(
+            "/api/auth/password-reset/request/",
+            {
+                "email": self.user.email,
+            },
+            format="json",
+        )
+
+        response = self.client.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "email": self.user.email,
+                "otp": "654321",
+                "new_password": (
+                    "NewCareerBridge@Test456"
+                ),
+                "new_password_confirm": (
+                    "NewCareerBridge@Test456"
+                ),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.user.refresh_from_db()
+
+        self.assertTrue(
+            self.user.check_password(
+                "NewCareerBridge@Test456"
+            )
+        )
+        self.assertEqual(
+            self.user.password_reset_otp,
+            "",
+        )
+        mocked_generate_otp.assert_called_once()
+
+    @patch(
+        "accounts.services.generate_otp",
+        return_value="654321",
+    )
+    def test_wrong_reset_code_is_rejected(
+        self,
+        mocked_generate_otp,
+    ):
+        self.client.post(
+            "/api/auth/password-reset/request/",
+            {
+                "email": self.user.email,
+            },
+            format="json",
+        )
+
+        response = self.client.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "email": self.user.email,
+                "otp": "000000",
+                "new_password": (
+                    "NewCareerBridge@Test456"
+                ),
+                "new_password_confirm": (
+                    "NewCareerBridge@Test456"
+                ),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(
+            self.user.password_reset_otp_attempts,
+            1,
+        )
+        mocked_generate_otp.assert_called_once()
+
+    def test_unknown_email_returns_generic_response(
+        self,
+    ):
+        response = self.client.post(
+            "/api/auth/password-reset/request/",
+            {
+                "email": "unknown@example.com",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)

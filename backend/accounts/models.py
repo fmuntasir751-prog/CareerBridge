@@ -42,5 +42,19 @@ class User(AbstractUser):
         default=0,
     )
 
+    password_reset_otp = models.CharField(
+        max_length=128,
+        blank=True,
+    )
+
+    password_reset_otp_created_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    password_reset_otp_attempts = models.PositiveSmallIntegerField(
+        default=0,
+    )
+
     def __str__(self):
         return self.email

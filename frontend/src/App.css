@@ -2162,3 +2162,15 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+.forgot-password-link {
+  align-self: flex-end;
+  margin-top: -0.35rem;
+  color: #315efb;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}

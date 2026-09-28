@@ -143,5 +143,14 @@
 "resendCode": "コードを再送信",
 "sendingCode": "送信中...",
 "verificationCodeResent": "新しい認証コードをメールに送信しました。",
-"backToLogin": "ログインに戻る"
+"backToLogin": "ログインに戻る",
+  "forgotPassword": "パスワードを忘れた場合",
+  "forgotPasswordTitle": "パスワードを再設定",
+  "forgotPasswordMessage": "認証済みのメールアドレスを入力してください。",
+  "resetPasswordMessage": "6桁のコードと新しいパスワードを入力してください。",
+  "sendResetCode": "再設定コードを送信",
+  "newPassword": "新しいパスワード",
+  "confirmNewPassword": "新しいパスワードの確認",
+  "resettingPassword": "パスワードを再設定しています...",
+  "resetPassword": "パスワードを再設定"
 }
