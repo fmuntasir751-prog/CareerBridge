@@ -154,5 +154,6 @@
   "resettingPassword": "Resetting password...",
   "resetPassword": "Reset password",
   "pageNotFound": "Page not found",
-"pageNotFoundMessage": "The page you are looking for does not exist or may have been moved."
+"pageNotFoundMessage": "The page you are looking for does not exist or may have been moved.",
+"loadingMessage": "Preparing your CareerBridge experience..."
 }

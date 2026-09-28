@@ -154,5 +154,6 @@
   "resettingPassword": "パスワードを再設定しています...",
   "resetPassword": "パスワードを再設定",
   "pageNotFound": "ページが見つかりません",
-"pageNotFoundMessage": "お探しのページは存在しないか、移動された可能性があります。"
+"pageNotFoundMessage": "お探しのページは存在しないか、移動された可能性があります。",
+"loadingMessage": "CareerBridgeを準備しています..."
 }

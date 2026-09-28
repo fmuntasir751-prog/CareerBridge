@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import api from "../services/api";
+import LoadingScreen from "./LoadingScreen.jsx";
 
 function RoleRoute({ allowedRoles }) {
   const [user, setUser] = useState(null);
@@ -13,28 +11,35 @@ function RoleRoute({ allowedRoles }) {
     useState(false);
 
   useEffect(() => {
+    let active = true;
+
     const loadCurrentUser = async () => {
       try {
         const response = await api.get("/auth/me/");
-        setUser(response.data);
+
+        if (active) {
+          setUser(response.data);
+        }
       } catch {
-        setAuthenticationFailed(true);
+        if (active) {
+          setAuthenticationFailed(true);
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
     loadCurrentUser();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading) {
-    return (
-      <main className="auth-page">
-        <section className="auth-card">
-          <p>Loading...</p>
-        </section>
-      </main>
-    );
+    return <LoadingScreen />;
   }
 
   if (authenticationFailed) {

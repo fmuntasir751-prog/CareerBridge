@@ -2203,3 +2203,54 @@
   justify-content: center;
   text-decoration: none;
 }
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(49, 94, 251, 0.16),
+      transparent 35%
+    ),
+    #f6f8fc;
+  color: #102044;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 56px;
+  height: 56px;
+  border: 5px solid rgba(49, 94, 251, 0.18);
+  border-top-color: #315efb;
+  border-radius: 50%;
+  animation: careerbridge-spin 0.8s linear infinite;
+}
+
+.loading-brand {
+  margin: 22px 0 6px;
+  color: #102044;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.loading-message {
+  margin: 0;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+@keyframes careerbridge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 1.8s;
+  }
+}
