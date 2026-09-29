@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 function Login() {
   const { t } = useTranslation();
@@ -42,9 +44,14 @@ function Login() {
       );
 
       navigate("/dashboard");
-    } catch {
-      setError(t("invalidCredentials"));
-    } finally {
+    } catch (requestError) {
+  setError(
+    getApiErrorMessage(
+      requestError,
+      t("invalidCredentials"),
+    ),
+  );
+} finally {
       setLoading(false);
     }
   };

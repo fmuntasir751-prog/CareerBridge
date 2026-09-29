@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 const initialForm = {
   username: "",
@@ -38,22 +40,6 @@ function Register() {
     }));
   };
 
-  const getErrorMessage = (requestError) => {
-    const responseData = requestError.response?.data;
-
-    if (!responseData) {
-      return t("serverError");
-    }
-
-    if (typeof responseData === "string") {
-      return responseData;
-    }
-
-    return Object.values(responseData)
-      .flat()
-      .join(" ");
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -71,7 +57,12 @@ function Register() {
         },
       });
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("serverError"),
+        ),
+      );
     } finally {
       setLoading(false);
     }

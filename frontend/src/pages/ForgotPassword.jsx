@@ -2,23 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import api from "../services/api";
-
-function getErrorMessage(error, fallback) {
-  const responseData = error.response?.data;
-
-  if (!responseData) {
-    return fallback;
-  }
-
-  if (typeof responseData === "string") {
-    return responseData;
-  }
-
-  return Object.values(responseData)
-    .flat()
-    .join(" ");
-}
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 function ForgotPassword() {
   const { t } = useTranslation();
@@ -26,11 +12,13 @@ function ForgotPassword() {
 
   const [step, setStep] = useState("request");
   const [email, setEmail] = useState("");
+
   const [form, setForm] = useState({
     otp: "",
     new_password: "",
     new_password_confirm: "",
   });
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,7 +48,7 @@ function ForgotPassword() {
       setStep("confirm");
     } catch (requestError) {
       setError(
-        getErrorMessage(
+        getApiErrorMessage(
           requestError,
           t("serverError"),
         ),
@@ -89,7 +77,7 @@ function ForgotPassword() {
       setStep("success");
     } catch (requestError) {
       setError(
-        getErrorMessage(
+        getApiErrorMessage(
           requestError,
           t("serverError"),
         ),
@@ -108,6 +96,7 @@ function ForgotPassword() {
         </a>
 
         <h1>{t("forgotPasswordTitle")}</h1>
+
         <p className="auth-subtitle">
           {step === "request"
             ? t("forgotPasswordMessage")
@@ -139,6 +128,7 @@ function ForgotPassword() {
                 onChange={(event) =>
                   setEmail(event.target.value)
                 }
+                autoComplete="email"
                 required
               />
             </label>
@@ -165,6 +155,7 @@ function ForgotPassword() {
               <input
                 type="email"
                 value={email}
+                autoComplete="email"
                 readOnly
               />
             </label>
@@ -174,9 +165,11 @@ function ForgotPassword() {
               <input
                 name="otp"
                 inputMode="numeric"
+                pattern="[0-9]{6}"
                 maxLength={6}
                 value={form.otp}
                 onChange={handleFormChange}
+                autoComplete="one-time-code"
                 required
               />
             </label>
@@ -188,6 +181,7 @@ function ForgotPassword() {
                 name="new_password"
                 value={form.new_password}
                 onChange={handleFormChange}
+                autoComplete="new-password"
                 required
               />
             </label>
@@ -199,6 +193,7 @@ function ForgotPassword() {
                 name="new_password_confirm"
                 value={form.new_password_confirm}
                 onChange={handleFormChange}
+                autoComplete="new-password"
                 required
               />
             </label>
