@@ -43,6 +43,17 @@ function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    if (form.password.length < 8) {
+      setError(t("passwordTooShort"));
+      return;
+    }
+
+    if (form.password !== form.password_confirm) {
+      setError(t("passwordsDoNotMatch"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -83,7 +94,11 @@ function Register() {
         </p>
 
         {error && (
-          <div className="form-message error">
+          <div
+            className="form-message error"
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </div>
         )}
@@ -183,6 +198,7 @@ function Register() {
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password"
+              minLength={8}
               required
             />
           </label>
@@ -195,6 +211,7 @@ function Register() {
               value={form.password_confirm}
               onChange={handleChange}
               autoComplete="new-password"
+              minLength={8}
               required
             />
           </label>

@@ -155,5 +155,7 @@
   "resetPassword": "パスワードを再設定",
   "pageNotFound": "ページが見つかりません",
 "pageNotFoundMessage": "お探しのページは存在しないか、移動された可能性があります。",
-"loadingMessage": "CareerBridgeを準備しています..."
+"loadingMessage": "CareerBridgeを準備しています...",
+"passwordTooShort": "パスワードは8文字以上で入力してください。",
+"passwordsDoNotMatch": "パスワードが一致しません。"
 }

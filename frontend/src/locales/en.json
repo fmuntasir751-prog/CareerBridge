@@ -155,5 +155,7 @@
   "resetPassword": "Reset password",
   "pageNotFound": "Page not found",
 "pageNotFoundMessage": "The page you are looking for does not exist or may have been moved.",
-"loadingMessage": "Preparing your CareerBridge experience..."
+"loadingMessage": "Preparing your CareerBridge experience...",
+"passwordTooShort": "Password must contain at least 8 characters.",
+"passwordsDoNotMatch": "The passwords do not match."
 }
