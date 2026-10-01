@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import api, {
   getApiErrorMessage,
@@ -14,6 +14,7 @@ function Login() {
     username: "",
     password: "",
   });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,12 +33,16 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login/", form);
+      const response = await api.post(
+        "/auth/login/",
+        form,
+      );
 
       localStorage.setItem(
         "careerbridge-access",
         response.data.access,
       );
+
       localStorage.setItem(
         "careerbridge-refresh",
         response.data.refresh,
@@ -45,13 +50,13 @@ function Login() {
 
       navigate("/dashboard");
     } catch (requestError) {
-  setError(
-    getApiErrorMessage(
-      requestError,
-      t("invalidCredentials"),
-    ),
-  );
-} finally {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("invalidCredentials"),
+        ),
+      );
+    } finally {
       setLoading(false);
     }
   };
@@ -59,25 +64,39 @@ function Login() {
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <a href="/" className="auth-brand">
+        <Link to="/" className="auth-brand">
           <span>CB</span>
           CareerBridge
-        </a>
+        </Link>
 
         <h1>{t("loginTitle")}</h1>
-        <p className="auth-subtitle">{t("loginMessage")}</p>
+
+        <p className="auth-subtitle">
+          {t("loginMessage")}
+        </p>
 
         {error && (
-          <div className="form-message error">{error}</div>
+          <div
+            className="form-message error"
+            role="alert"
+            aria-live="assertive"
+          >
+            {error}
+          </div>
         )}
 
-        <form className="register-form" onSubmit={handleSubmit}>
+        <form
+          className="register-form"
+          onSubmit={handleSubmit}
+          aria-busy={loading}
+        >
           <label>
             {t("username")}
             <input
               name="username"
               value={form.username}
               onChange={handleChange}
+              autoComplete="username"
               required
             />
           </label>
@@ -89,32 +108,39 @@ function Login() {
               name="password"
               value={form.password}
               onChange={handleChange}
+              autoComplete="current-password"
               required
             />
           </label>
-          <a
-            href="/forgot-password"
+
+          <Link
+            to="/forgot-password"
             className="forgot-password-link"
           >
             {t("forgotPassword")}
-          </a>
+          </Link>
+
           <button
             className="submit-button"
             type="submit"
             disabled={loading}
           >
-            {loading ? t("loggingIn") : t("login")}
+            {loading
+              ? t("loggingIn")
+              : t("login")}
           </button>
         </form>
 
         <p className="auth-footer">
           {t("noAccount")}{" "}
-          <a href="/register">{t("register")}</a>
+          <Link to="/register">
+            {t("register")}
+          </Link>
         </p>
 
-        <a href="/" className="back-link">
+        <Link to="/" className="back-link">
           ← {t("backHome")}
-        </a>
+        </Link>
       </section>
     </main>
   );

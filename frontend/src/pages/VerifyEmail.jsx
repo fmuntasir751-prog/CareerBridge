@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 function VerifyEmail() {
   const { t } = useTranslation();
@@ -12,11 +18,13 @@ function VerifyEmail() {
   const [email, setEmail] = useState(
     location.state?.email || "",
   );
+
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
   const [cooldown, setCooldown] = useState(
     location.state?.email ? 60 : 0,
   );
@@ -26,38 +34,29 @@ function VerifyEmail() {
       return undefined;
     }
 
-    const timer = window.setInterval(() => {
-      setCooldown((current) => current - 1);
+    const timer = window.setTimeout(() => {
+      setCooldown((current) =>
+        Math.max(current - 1, 0),
+      );
     }, 1000);
 
-    return () => window.clearInterval(timer);
+    return () => window.clearTimeout(timer);
   }, [cooldown]);
-
-  const getErrorMessage = (requestError) => {
-    const responseData = requestError.response?.data;
-
-    if (!responseData) {
-      return t("serverError");
-    }
-
-    if (typeof responseData === "string") {
-      return responseData;
-    }
-
-    return Object.values(responseData)
-      .flat()
-      .join(" ");
-  };
 
   const handleVerify = async (event) => {
     event.preventDefault();
     setError("");
     setSuccess("");
+
+    if (otp.length !== 6) {
+      return;
+    }
+
     setLoading(true);
 
     try {
       await api.post("/auth/verify-email/", {
-        email,
+        email: email.trim(),
         otp,
       });
 
@@ -67,31 +66,50 @@ function VerifyEmail() {
         navigate("/login", {
           replace: true,
           state: {
-            message: t("emailVerificationSuccess"),
+            message: t(
+              "emailVerificationSuccess",
+            ),
           },
         });
       }, 1200);
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("serverError"),
+        ),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (!email.trim() || cooldown > 0) {
+      return;
+    }
+
     setError("");
     setSuccess("");
     setResending(true);
 
     try {
-      await api.post("/auth/resend-verification/", {
-        email,
-      });
+      await api.post(
+        "/auth/resend-verification/",
+        {
+          email: email.trim(),
+        },
+      );
 
       setSuccess(t("verificationCodeResent"));
       setCooldown(60);
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("serverError"),
+        ),
+      );
     } finally {
       setResending(false);
     }
@@ -100,10 +118,10 @@ function VerifyEmail() {
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <a href="/" className="auth-brand">
+        <Link to="/" className="auth-brand">
           <span>CB</span>
           CareerBridge
-        </a>
+        </Link>
 
         <h1>{t("verifyEmail")}</h1>
 
@@ -112,18 +130,30 @@ function VerifyEmail() {
         </p>
 
         {error && (
-          <div className="form-message error">
+          <div
+            className="form-message error"
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </div>
         )}
 
         {success && (
-          <div className="form-message success">
+          <div
+            className="form-message success"
+            role="status"
+            aria-live="polite"
+          >
             {success}
           </div>
         )}
 
-        <form onSubmit={handleVerify}>
+        <form
+          className="register-form"
+          onSubmit={handleVerify}
+          aria-busy={loading}
+        >
           <label>
             {t("email")}
             <input
@@ -132,6 +162,7 @@ function VerifyEmail() {
               onChange={(event) => {
                 setEmail(event.target.value);
               }}
+              autoComplete="email"
               required
             />
           </label>
@@ -144,14 +175,19 @@ function VerifyEmail() {
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}
+              minLength={6}
               pattern="[0-9]{6}"
               value={otp}
               onChange={(event) => {
                 setOtp(
-                  event.target.value.replace(/\D/g, ""),
+                  event.target.value.replace(
+                    /\D/g,
+                    "",
+                  ),
                 );
               }}
               placeholder="000000"
+              aria-label={t("verificationCode")}
               required
             />
           </label>
@@ -159,7 +195,11 @@ function VerifyEmail() {
           <button
             className="submit-button"
             type="submit"
-            disabled={loading || otp.length !== 6}
+            disabled={
+              loading
+              || resending
+              || otp.length !== 6
+            }
           >
             {loading
               ? t("verifying")
@@ -172,9 +212,10 @@ function VerifyEmail() {
           type="button"
           onClick={handleResend}
           disabled={
-            resending
+            loading
+            || resending
             || cooldown > 0
-            || !email
+            || !email.trim()
           }
         >
           {resending
@@ -184,9 +225,9 @@ function VerifyEmail() {
               : t("resendCode")}
         </button>
 
-        <a href="/login" className="back-link">
-          {t("backToLogin")}
-        </a>
+        <Link to="/login" className="back-link">
+          ← {t("backToLogin")}
+        </Link>
       </section>
     </main>
   );
