@@ -62,6 +62,20 @@ function ForgotPassword() {
     event.preventDefault();
     setError("");
     setMessage("");
+
+    if (form.new_password.length < 8) {
+      setError(t("passwordTooShort"));
+      return;
+    }
+
+    if (
+      form.new_password
+      !== form.new_password_confirm
+    ) {
+      setError(t("passwordsDoNotMatch"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -104,13 +118,21 @@ function ForgotPassword() {
         </p>
 
         {error && (
-          <div className="form-message error">
+          <div
+            className="form-message error"
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </div>
         )}
 
         {message && (
-          <div className="form-message success">
+          <div
+            className="form-message success"
+            role="status"
+            aria-live="polite"
+          >
             {message}
           </div>
         )}
@@ -182,6 +204,7 @@ function ForgotPassword() {
                 value={form.new_password}
                 onChange={handleFormChange}
                 autoComplete="new-password"
+                minLength={8}
                 required
               />
             </label>
@@ -194,6 +217,7 @@ function ForgotPassword() {
                 value={form.new_password_confirm}
                 onChange={handleFormChange}
                 autoComplete="new-password"
+                minLength={8}
                 required
               />
             </label>
