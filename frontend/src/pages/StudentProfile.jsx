@@ -21,18 +21,45 @@ function StudentProfile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState(emptyProfile);
-  const [profileImage, setProfileImage] = useState(null);
-  const [resume, setResume] = useState(null);
-  const [currentImage, setCurrentImage] = useState("");
-  const [currentResume, setCurrentResume] = useState("");
+  const [profile, setProfile] =
+    useState(emptyProfile);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [profileImage, setProfileImage] =
+    useState(null);
 
-  const isJapanese = i18n.language.startsWith("ja");
+  const [resume, setResume] =
+    useState(null);
+
+  const [currentImage, setCurrentImage] =
+    useState("");
+
+  const [currentResume, setCurrentResume] =
+    useState("");
+
+  const [
+    resumeAnalysis,
+    setResumeAnalysis,
+  ] = useState(null);
+
+  const [
+    analyzingResume,
+    setAnalyzingResume,
+  ] = useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  const isJapanese =
+    i18n.language.startsWith("ja");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -42,17 +69,23 @@ function StudentProfile() {
         );
 
         setProfile({
-          headline: response.data.headline || "",
-          bio: response.data.bio || "",
-          skills: response.data.skills || "",
-          university: response.data.university || "",
+          headline:
+            response.data.headline || "",
+          bio:
+            response.data.bio || "",
+          skills:
+            response.data.skills || "",
+          university:
+            response.data.university || "",
           graduation_year:
             response.data.graduation_year || "",
-          location: response.data.location || "",
+          location:
+            response.data.location || "",
           desired_job_title:
             response.data.desired_job_title || "",
           preferred_workplace:
-            response.data.preferred_workplace || "any",
+            response.data.preferred_workplace ||
+            "any",
           japanese_level:
             response.data.japanese_level ||
             "not_required",
@@ -63,7 +96,10 @@ function StudentProfile() {
         setCurrentImage(
           response.data.profile_image || "",
         );
-        setCurrentResume(response.data.resume || "");
+
+        setCurrentResume(
+          response.data.resume || "",
+        );
       } catch {
         setError(t("profileLoadError"));
       } finally {
@@ -92,11 +128,30 @@ function StudentProfile() {
 
     const formData = new FormData();
 
-    formData.append("headline", profile.headline);
-    formData.append("bio", profile.bio);
-    formData.append("skills", profile.skills);
-    formData.append("university", profile.university);
-    formData.append("location", profile.location);
+    formData.append(
+      "headline",
+      profile.headline,
+    );
+
+    formData.append(
+      "bio",
+      profile.bio,
+    );
+
+    formData.append(
+      "skills",
+      profile.skills,
+    );
+
+    formData.append(
+      "university",
+      profile.university,
+    );
+
+    formData.append(
+      "location",
+      profile.location,
+    );
 
     formData.append(
       "graduation_year",
@@ -131,7 +186,10 @@ function StudentProfile() {
     }
 
     if (resume) {
-      formData.append("resume", resume);
+      formData.append(
+        "resume",
+        resume,
+      );
     }
 
     try {
@@ -140,7 +198,8 @@ function StudentProfile() {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type":
+              "multipart/form-data",
           },
         },
       );
@@ -156,7 +215,14 @@ function StudentProfile() {
       setCurrentImage(
         response.data.profile_image || "",
       );
-      setCurrentResume(response.data.resume || "");
+
+      setCurrentResume(
+        response.data.resume || "",
+      );
+
+      if (resume) {
+        setResumeAnalysis(null);
+      }
 
       setProfileImage(null);
       setResume(null);
@@ -179,6 +245,51 @@ function StudentProfile() {
     }
   };
 
+  const handleAnalyzeResume = async () => {
+    if (!currentResume) {
+      setError(
+        isJapanese
+          ? "先に履歴書をアップロードして保存してください。"
+          : "Upload and save your resume first.",
+      );
+
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    setAnalyzingResume(true);
+
+    try {
+      const response = await api.post(
+        "/profiles/student/resume/analysis/",
+        {
+          language:
+            isJapanese ? "ja" : "en",
+        },
+      );
+
+      setResumeAnalysis(
+        response.data,
+      );
+
+      setMessage(
+        isJapanese
+          ? "履歴書の分析が完了しました。"
+          : "Resume analysis was completed.",
+      );
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.detail ||
+          (isJapanese
+            ? "履歴書を分析できませんでした。"
+            : "Could not analyze the resume."),
+      );
+    } finally {
+      setAnalyzingResume(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="page-loading">
@@ -193,9 +304,14 @@ function StudentProfile() {
         <button
           className="back-button"
           type="button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
-          ← {isJapanese ? "ダッシュボード" : "Dashboard"}
+          ←{" "}
+          {isJapanese
+            ? "ダッシュボード"
+            : "Dashboard"}
         </button>
 
         <div className="auth-heading">
@@ -261,7 +377,9 @@ function StudentProfile() {
               <input
                 type="text"
                 name="desired_job_title"
-                value={profile.desired_job_title}
+                value={
+                  profile.desired_job_title
+                }
                 onChange={handleChange}
                 placeholder={
                   isJapanese
@@ -273,7 +391,9 @@ function StudentProfile() {
           </div>
 
           <label>
-            {isJapanese ? "自己紹介" : "About you"}
+            {isJapanese
+              ? "自己紹介"
+              : "About you"}
 
             <textarea
               name="bio"
@@ -289,14 +409,19 @@ function StudentProfile() {
           </label>
 
           <label>
-            {isJapanese ? "スキル" : "Skills"}
+            {isJapanese
+              ? "スキル"
+              : "Skills"}
 
             <input
               type="text"
               name="skills"
               value={profile.skills}
               onChange={handleChange}
-              placeholder="React, JavaScript, HTML, CSS, Django"
+              placeholder={
+                "React, JavaScript, " +
+                "HTML, CSS, Django"
+              }
             />
 
             <small>
@@ -330,7 +455,9 @@ function StudentProfile() {
                 name="graduation_year"
                 min="2020"
                 max="2100"
-                value={profile.graduation_year}
+                value={
+                  profile.graduation_year
+                }
                 onChange={handleChange}
               />
             </label>
@@ -358,11 +485,15 @@ function StudentProfile() {
 
               <select
                 name="preferred_workplace"
-                value={profile.preferred_workplace}
+                value={
+                  profile.preferred_workplace
+                }
                 onChange={handleChange}
               >
                 <option value="any">
-                  {isJapanese ? "指定なし" : "Any"}
+                  {isJapanese
+                    ? "指定なし"
+                    : "Any"}
                 </option>
 
                 <option value="onsite">
@@ -394,7 +525,9 @@ function StudentProfile() {
 
               <select
                 name="japanese_level"
-                value={profile.japanese_level}
+                value={
+                  profile.japanese_level
+                }
                 onChange={handleChange}
               >
                 <option value="not_required">
@@ -403,9 +536,17 @@ function StudentProfile() {
                     : "Not specified"}
                 </option>
 
-                <option value="n3">JLPT N3</option>
-                <option value="n2">JLPT N2</option>
-                <option value="n1">JLPT N1</option>
+                <option value="n3">
+                  JLPT N3
+                </option>
+
+                <option value="n2">
+                  JLPT N2
+                </option>
+
+                <option value="n1">
+                  JLPT N1
+                </option>
               </select>
             </label>
 
@@ -419,7 +560,9 @@ function StudentProfile() {
                 name="desired_salary_min"
                 min="0"
                 step="10000"
-                value={profile.desired_salary_min}
+                value={
+                  profile.desired_salary_min
+                }
                 onChange={handleChange}
                 placeholder="250000"
               />
@@ -437,28 +580,39 @@ function StudentProfile() {
                 accept="image/*"
                 onChange={(event) =>
                   setProfileImage(
-                    event.target.files?.[0] || null,
+                    event.target.files?.[0] ||
+                      null,
                   )
                 }
               />
             </label>
 
             <label>
-              {isJapanese ? "履歴書" : "Resume"}
+              {isJapanese
+                ? "履歴書"
+                : "Resume"}
 
               <input
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf,.docx"
                 onChange={(event) =>
                   setResume(
-                    event.target.files?.[0] || null,
+                    event.target.files?.[0] ||
+                      null,
                   )
                 }
               />
+
+              <small>
+                {isJapanese
+                  ? "PDFまたはDOCX、最大5MB"
+                  : "PDF or DOCX, maximum 5 MB"}
+              </small>
             </label>
           </div>
 
-          {(currentImage || currentResume) && (
+          {(currentImage ||
+            currentResume) && (
             <div className="current-profile-files">
               {currentImage && (
                 <div>
@@ -470,7 +624,11 @@ function StudentProfile() {
 
                   <img
                     src={currentImage}
-                    alt=""
+                    alt={
+                      isJapanese
+                        ? "現在のプロフィール"
+                        : "Current profile"
+                    }
                   />
                 </div>
               )}
@@ -487,6 +645,182 @@ function StudentProfile() {
                 </a>
               )}
             </div>
+          )}
+
+          {currentResume && (
+            <section className="resume-analysis-section">
+              <div className="resume-analysis-intro">
+                <div>
+                  <p className="eyebrow">
+                    {isJapanese
+                      ? "AI履歴書分析"
+                      : "AI Resume Analysis"}
+                  </p>
+
+                  <h2>
+                    {isJapanese
+                      ? "履歴書を改善する"
+                      : "Improve your resume"}
+                  </h2>
+
+                  <p>
+                    {isJapanese
+                      ? "AIがスキル、構成、経験を分析し、改善点を提案します。"
+                      : "AI reviews your skills, structure and experience and suggests improvements."}
+                  </p>
+                </div>
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={analyzingResume}
+                  onClick={
+                    handleAnalyzeResume
+                  }
+                >
+                  {analyzingResume
+                    ? isJapanese
+                      ? "分析中..."
+                      : "Analyzing..."
+                    : isJapanese
+                      ? "履歴書を分析"
+                      : "Analyze my resume"}
+                </button>
+              </div>
+
+              {resumeAnalysis?.analysis && (
+                <div className="resume-analysis-result">
+                  <div className="resume-score">
+                    <strong>
+                      {
+                        resumeAnalysis.overall_score
+                      }
+                    </strong>
+
+                    <span>/100</span>
+                  </div>
+
+                  <div className="resume-analysis-summary">
+                    <h3>
+                      {isJapanese
+                        ? "分析結果"
+                        : "Analysis result"}
+                    </h3>
+
+                    <p>
+                      {
+                        resumeAnalysis.analysis
+                          .summary
+                      }
+                    </p>
+
+                    <span className="analysis-source">
+                      {resumeAnalysis.analysis
+                        .ai_generated
+                        ? isJapanese
+                          ? "Gemini AIによる分析"
+                          : "Analyzed with Gemini AI"
+                        : isJapanese
+                          ? "ローカル分析"
+                          : "Local analysis"}
+                    </span>
+                  </div>
+
+                  <div className="resume-analysis-column">
+                    <h3>
+                      {isJapanese
+                        ? "検出されたスキル"
+                        : "Detected skills"}
+                    </h3>
+
+                    <div className="match-skill-list">
+                      {resumeAnalysis.analysis
+                        .detected_skills
+                        .length ? (
+                        resumeAnalysis.analysis
+                          .detected_skills.map(
+                            (skill) => (
+                              <span
+                                className={
+                                  "match-skill " +
+                                  "matched"
+                                }
+                                key={skill}
+                              >
+                                ✓ {skill}
+                              </span>
+                            ),
+                          )
+                      ) : (
+                        <span className="match-empty">
+                          {isJapanese
+                            ? "スキルが見つかりませんでした"
+                            : "No skills were detected"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="resume-analysis-grid">
+                    <div>
+                      <h3>
+                        {isJapanese
+                          ? "強み"
+                          : "Strengths"}
+                      </h3>
+
+                      <ul>
+                        {resumeAnalysis.analysis
+                          .strengths.map(
+                            (strength) => (
+                              <li key={strength}>
+                                {strength}
+                              </li>
+                            ),
+                          )}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3>
+                        {isJapanese
+                          ? "改善提案"
+                          : "Recommendations"}
+                      </h3>
+
+                      <ul>
+                        {resumeAnalysis.analysis
+                          .recommendations
+                          .length ? (
+                          resumeAnalysis.analysis
+                            .recommendations.map(
+                              (
+                                recommendation,
+                              ) => (
+                                <li
+                                  key={
+                                    recommendation
+                                  }
+                                >
+                                  {
+                                    recommendation
+                                  }
+                                </li>
+                              ),
+                            )
+                        ) : (
+                          <li>
+                            {isJapanese
+                              ? "大きな改善点はありません。"
+                              : "No major improvements are required."}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
           )}
 
           <button

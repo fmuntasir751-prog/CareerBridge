@@ -4,6 +4,7 @@ from .views import (
     CompanyProfileView,
     StudentProfileView,
     StudentProgressView,
+    StudentResumeAnalysisView,
 )
 
 
@@ -22,5 +23,10 @@ urlpatterns = [
         "company/me/",
         CompanyProfileView.as_view(),
         name="company-profile",
+    ),
+    path(
+        "student/resume/analysis/",
+        StudentResumeAnalysisView.as_view(),
+        name="student-resume-analysis",
     ),
 ]

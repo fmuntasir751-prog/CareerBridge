@@ -1,5 +1,5 @@
 from django.db.models import Count, Q
-from rest_framework import generics
+from rest_framework import generics,status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
     FormParser,
@@ -13,13 +13,22 @@ from rest_framework.views import APIView
 from applications.models import Application
 from jobs.models import SavedJob
 
-from .models import CompanyProfile, StudentProfile
+from .models import (
+    CompanyProfile,
+    ResumeAnalysis,
+    StudentProfile,
+)
 from .serializers import (
     CompanyProfileSerializer,
+    ResumeAnalysisSerializer,
     StudentProfileSerializer,
 )
-
-
+from .resume_analysis import (
+    ResumeAnalysisError,
+    calculate_resume_hash,
+    extract_resume_text,
+    generate_ai_analysis,
+)
 class StudentProfileView(
     generics.RetrieveUpdateAPIView,
 ):
@@ -177,3 +186,237 @@ class CompanyProfileView(
         )
 
         return profile
+class StudentResumeAnalysisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_profile(self, request):
+        if request.user.role != "student":
+            raise PermissionDenied(
+                "Only student accounts can "
+                "analyze resumes."
+            )
+
+        profile, _ = (
+            StudentProfile.objects.get_or_create(
+                user=request.user,
+            )
+        )
+
+        return profile
+
+    def get(self, request):
+        profile = self.get_profile(request)
+
+        analyses = (
+            ResumeAnalysis.objects.filter(
+                student_profile=profile,
+            )[:10]
+        )
+
+        serializer = ResumeAnalysisSerializer(
+            analyses,
+            many=True,
+        )
+
+        return Response(
+            {
+                "count": len(serializer.data),
+                "results": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request):
+        profile = self.get_profile(request)
+
+        if not profile.resume:
+            return Response(
+                {
+                    "detail": (
+                        "Upload and save a resume "
+                        "before requesting analysis."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        language = request.data.get(
+            "language",
+            "en",
+        )
+
+        if language not in ("en", "ja"):
+            language = "en"
+
+        force_analysis = (
+            str(
+                request.data.get(
+                    "force",
+                    "",
+                )
+            ).lower()
+            in (
+                "1",
+                "true",
+                "yes",
+            )
+        )
+
+        try:
+            resume_hash = (
+                calculate_resume_hash(
+                    profile.resume,
+                )
+            )
+        except (OSError, ValueError):
+            return Response(
+                {
+                    "detail": (
+                        "The saved resume file "
+                        "could not be opened."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not force_analysis:
+            existing_analysis = (
+                ResumeAnalysis.objects.filter(
+                    student_profile=profile,
+                    resume_hash=resume_hash,
+                    language=language,
+                    status=(
+                        ResumeAnalysis.Status.COMPLETED
+                    ),
+                ).first()
+            )
+
+            if existing_analysis:
+                response_data = (
+                    ResumeAnalysisSerializer(
+                        existing_analysis,
+                    ).data
+                )
+
+                return Response(
+                    {
+                        **response_data,
+                        "cached": True,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        analysis_record = (
+            ResumeAnalysis.objects.create(
+                student_profile=profile,
+                resume_name=profile.resume.name,
+                resume_hash=resume_hash,
+                language=language,
+                status=(
+                    ResumeAnalysis.Status.PROCESSING
+                ),
+            )
+        )
+
+        try:
+            resume_text = extract_resume_text(
+                profile.resume,
+            )
+
+            result = generate_ai_analysis(
+                resume_text,
+                language,
+                profile,
+            )
+
+            analysis_record.overall_score = (
+                result["overall_score"]
+            )
+
+            analysis_record.analysis = result
+            analysis_record.status = (
+                ResumeAnalysis.Status.COMPLETED
+            )
+
+            analysis_record.error_message = ""
+
+            analysis_record.save(
+                update_fields=[
+                    "overall_score",
+                    "analysis",
+                    "status",
+                    "error_message",
+                    "updated_at",
+                ],
+            )
+
+        except ResumeAnalysisError as error:
+            analysis_record.status = (
+                ResumeAnalysis.Status.FAILED
+            )
+
+            analysis_record.error_message = str(
+                error,
+            )[:500]
+
+            analysis_record.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_at",
+                ],
+            )
+
+            return Response(
+                {
+                    "detail": str(error),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as error:
+            print(
+                f"Resume analysis endpoint failed: "
+                f"{error}",
+                flush=True,
+            )
+
+            analysis_record.status = (
+                ResumeAnalysis.Status.FAILED
+            )
+
+            analysis_record.error_message = (
+                "Resume analysis failed."
+            )
+
+            analysis_record.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_at",
+                ],
+            )
+
+            return Response(
+                {
+                    "detail": (
+                        "Resume analysis could "
+                        "not be completed."
+                    ),
+                },
+                status=(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR
+                ),
+            )
+
+        response_data = ResumeAnalysisSerializer(
+            analysis_record,
+        ).data
+
+        return Response(
+            {
+                **response_data,
+                "cached": False,
+            },
+            status=status.HTTP_201_CREATED,
+        )

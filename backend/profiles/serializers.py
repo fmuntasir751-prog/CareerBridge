@@ -1,6 +1,10 @@
 from rest_framework import serializers
 
-from .models import CompanyProfile, StudentProfile
+from .models import (
+    CompanyProfile,
+    ResumeAnalysis,
+    StudentProfile,
+)
 
 
 class StudentProfileSerializer(
@@ -76,3 +80,22 @@ class CompanyProfileSerializer(
             "username",
             "email",
         )
+class ResumeAnalysisSerializer(
+    serializers.ModelSerializer,
+):
+    class Meta:
+        model = ResumeAnalysis
+
+        fields = (
+            "id",
+            "resume_name",
+            "language",
+            "status",
+            "overall_score",
+            "analysis",
+            "error_message",
+            "created_at",
+            "updated_at",
+        )
+
+        read_only_fields = fields
