@@ -53,7 +53,10 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+
+    "cloudinary_storage",
     "django.contrib.staticfiles",
+    "cloudinary",
 
     "rest_framework",
     "corsheaders",
@@ -194,12 +197,51 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+
+CLOUDINARY_CLOUD_NAME = os.environ.get(
+    "CLOUDINARY_CLOUD_NAME",
+    "",
+)
+
+CLOUDINARY_API_KEY = os.environ.get(
+    "CLOUDINARY_API_KEY",
+    "",
+)
+
+CLOUDINARY_API_SECRET = os.environ.get(
+    "CLOUDINARY_API_SECRET",
+    "",
+)
+
+CLOUDINARY_CONFIGURED = all(
+    [
+        CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET,
+    ]
+)
+
+if CLOUDINARY_CONFIGURED:
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+        "API_KEY": CLOUDINARY_API_KEY,
+        "API_SECRET": CLOUDINARY_API_SECRET,
+    }
+
+    DEFAULT_MEDIA_STORAGE = (
+        "cloudinary_storage.storage."
+        "MediaCloudinaryStorage"
+    )
+else:
+    DEFAULT_MEDIA_STORAGE = (
+        "django.core.files.storage."
+        "FileSystemStorage"
+    )
+
+
 STORAGES = {
     "default": {
-        "BACKEND": (
-            "django.core.files.storage."
-            "FileSystemStorage"
-        ),
+        "BACKEND": DEFAULT_MEDIA_STORAGE,
     },
     "staticfiles": {
         "BACKEND": (
@@ -281,10 +323,15 @@ EMAIL_HOST_PASSWORD = os.environ.get(
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
-    "CareerBridge <noreply@careerbridge.local>",
+    (
+        "CareerBridge "
+        "<noreply@careerbridge.local>"
+    ),
 )
 
 EMAIL_TIMEOUT = 15
+
+
 BREVO_API_KEY = os.environ.get(
     "BREVO_API_KEY",
     "",
