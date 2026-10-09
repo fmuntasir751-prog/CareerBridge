@@ -4,7 +4,6 @@ import os
 import re
 from pathlib import Path
 
-from django.test import client
 from docx import Document
 from google import genai
 from google.genai import types
@@ -619,9 +618,7 @@ def generate_ai_analysis(
         language,
     )
 
-    api_key = os.getenv(
-        "GEMINI_API_KEY",
-    )
+    api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
         return fallback
@@ -632,6 +629,11 @@ def generate_ai_analysis(
         else "English"
     )
 
+    desired_job_title = (
+        profile.desired_job_title
+        or "Not specified"
+    )
+
     prompt = f"""
 You are a professional resume reviewer for
 CareerBridge, a job platform for international
@@ -639,7 +641,8 @@ students seeking employment in Japan.
 
 Analyze the resume in {response_language}.
 
-Return valid JSON only with this exact structure:
+Return valid JSON only using this exact structure:
+
 {{
   "overall_score": 0,
   "summary": "",
@@ -662,12 +665,12 @@ Rules:
 - overall_score must be between 0 and 100.
 - Give practical, beginner-friendly feedback.
 - Do not invent experience, skills or qualifications.
-- Do not include sensitive personal data in the output.
+- Do not include sensitive personal data.
 - Each list must contain short strings.
 - section_scores must use values from 0 to 100.
 - Focus on applications to companies in Japan.
-- Consider the desired job title:
-  {profile.desired_job_title or "Not specified"}
+- Consider this desired job title:
+  {desired_job_title}
 
 Resume text:
 {resume_text}
@@ -675,34 +678,44 @@ Resume text:
 
     try:
         client = genai.Client(
-    api_key=api_key,
-    http_options=types.HttpOptions(
-        timeout=10000,
-        retry_options=types.HttpRetryOptions(
-            attempts=1,
-        ),
-    ),
-)
-
-        interaction = (
-            client.interactions.create(
-                model="gemini-3.6-flash",
-                input=prompt,
-            )
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                timeout=8000,
+                retry_options=(
+                    types.HttpRetryOptions(
+                        attempts=1,
+                    )
+                ),
+            ),
         )
 
-        response_text = (
-            interaction.output_text or ""
+        model_name = os.getenv(
+            "GEMINI_RESUME_MODEL",
+            "gemini-3.1-flash-lite",
         )
 
-        if not response_text:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type=(
+                    "application/json"
+                ),
+                temperature=0.2,
+                max_output_tokens=1200,
+            ),
+        )
+
+        response_text = response.text or ""
+
+        if not response_text.strip():
             return fallback
 
-        data = json.loads(
-            clean_json_response(
-                response_text,
-            )
+        cleaned_response = clean_json_response(
+            response_text,
         )
+
+        data = json.loads(cleaned_response)
 
         if not isinstance(data, dict):
             return fallback
@@ -711,6 +724,20 @@ Resume text:
             data,
             fallback,
         )
+
+    except (
+        json.JSONDecodeError,
+        ValueError,
+        TypeError,
+    ) as error:
+        print(
+            "Resume analysis returned invalid "
+            f"JSON: {error}",
+            flush=True,
+        )
+
+        return fallback
+
     except Exception as error:
         print(
             f"Resume analysis failed: {error}",
