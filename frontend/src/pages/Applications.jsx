@@ -31,6 +31,40 @@ const statusLabels = {
   },
 };
 
+const readinessLabels = {
+  en: {
+    excellent: "Excellent match",
+    good: "Good match",
+    developing: "Developing match",
+    low: "Low match",
+  },
+  ja: {
+    excellent: "非常に高い適合度",
+    good: "高い適合度",
+    developing: "改善可能",
+    low: "低い適合度",
+  },
+};
+
+const breakdownLabels = {
+  en: {
+    skills: "Skills",
+    job_title: "Job title",
+    location: "Location",
+    workplace: "Workplace",
+    japanese_level: "Japanese",
+    salary: "Salary",
+  },
+  ja: {
+    skills: "スキル",
+    job_title: "希望職種",
+    location: "勤務地",
+    workplace: "勤務形態",
+    japanese_level: "日本語レベル",
+    salary: "給与",
+  },
+};
+
 function Applications() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -39,24 +73,31 @@ function Applications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
-  const [withdrawingId, setWithdrawingId] = useState(null);
+  const [withdrawingId, setWithdrawingId] =
+    useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isJapanese = i18n.language.startsWith("ja");
+  const isJapanese =
+    i18n.language.startsWith("ja");
+
   const language = isJapanese ? "ja" : "en";
 
   useEffect(() => {
     const loadApplications = async () => {
       try {
-        const [userResponse, applicationsResponse] =
-          await Promise.all([
-            api.get("/auth/me/"),
-            api.get("/applications/"),
-          ]);
+        const [
+          userResponse,
+          applicationsResponse,
+        ] = await Promise.all([
+          api.get("/auth/me/"),
+          api.get("/applications/"),
+        ]);
 
         setUser(userResponse.data);
-        setApplications(applicationsResponse.data);
+        setApplications(
+          applicationsResponse.data,
+        );
       } catch {
         setError(
           isJapanese
@@ -87,15 +128,18 @@ function Applications() {
         },
       );
 
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === applicationId
-            ? {
-                ...application,
-                status: response.data.status,
-              }
-            : application,
-        ),
+      setApplications(
+        (currentApplications) =>
+          currentApplications.map(
+            (application) =>
+              application.id === applicationId
+                ? {
+                    ...application,
+                    status:
+                      response.data.status,
+                  }
+                : application,
+          ),
       );
 
       setSuccess(
@@ -114,7 +158,9 @@ function Applications() {
     }
   };
 
-  const withdrawApplication = async (applicationId) => {
+  const withdrawApplication = async (
+    applicationId,
+  ) => {
     const confirmed = window.confirm(
       isJapanese
         ? "この応募を辞退しますか？"
@@ -134,12 +180,14 @@ function Applications() {
         `/applications/${applicationId}/withdraw/`,
       );
 
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === applicationId
-            ? response.data
-            : application,
-        ),
+      setApplications(
+        (currentApplications) =>
+          currentApplications.map(
+            (application) =>
+              application.id === applicationId
+                ? response.data
+                : application,
+          ),
       );
 
       setSuccess(
@@ -148,7 +196,9 @@ function Applications() {
           : "Your application was withdrawn.",
       );
     } catch (requestError) {
-      const responseData = requestError.response?.data;
+      const responseData =
+        requestError.response?.data;
+
       const message =
         responseData?.detail ||
         responseData?.non_field_errors?.[0];
@@ -198,9 +248,14 @@ function Applications() {
 
         <button
           type="button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
-          ← {isJapanese ? "ダッシュボード" : "Dashboard"}
+          ←{" "}
+          {isJapanese
+            ? "ダッシュボード"
+            : "Dashboard"}
         </button>
       </header>
 
@@ -238,156 +293,350 @@ function Applications() {
         )}
 
         <div className="application-list">
-          {applications.map((application) => (
-            <article
-              className="application-card"
-              key={application.id}
-            >
-              <div className="application-information">
-                <span
-                  className={`status-badge status-${application.status}`}
-                >
-                  {statusLabels[language][
-                    application.status
-                  ] || application.status}
-                </span>
+          {applications.map((application) => {
+            const matchAnalysis =
+              application.applicant_match_analysis;
 
-                <h2>{getJobTitle(application)}</h2>
+            const matchScore =
+              application.applicant_match_score;
 
-                <p>
-                  <strong>
-                    {isJapanese ? "会社：" : "Company: "}
-                  </strong>
-                  {application.company_name}
-                </p>
+            return (
+              <article
+                className="application-card"
+                key={application.id}
+              >
+                <div className="application-information">
+                  <span
+                    className={
+                      `status-badge ` +
+                      `status-${application.status}`
+                    }
+                  >
+                    {statusLabels[language][
+                      application.status
+                    ] || application.status}
+                  </span>
 
-                {user?.role === "company" && (
-                  <>
-                    <p>
-                      <strong>
-                        {isJapanese
-                          ? "応募者："
-                          : "Applicant: "}
-                      </strong>
-                      {application.applicant_name}
-                    </p>
+                  <h2>
+                    {getJobTitle(application)}
+                  </h2>
 
-                    <p>
-                      <strong>
-                        {isJapanese
-                          ? "メール："
-                          : "Email: "}
-                      </strong>
-                      {application.applicant_email}
-                    </p>
-                  </>
-                )}
-
-                <p>
-                  <strong>
-                    {isJapanese
-                      ? "応募日："
-                      : "Applied: "}
-                  </strong>
-                  {formatDate(application.applied_at)}
-                </p>
-
-                {application.cover_letter && (
-                  <div className="application-cover-letter">
-                    <h3>
+                  <p>
+                    <strong>
                       {isJapanese
-                        ? "カバーレター"
-                        : "Cover letter"}
-                    </h3>
-                    <p>{application.cover_letter}</p>
-                  </div>
-                )}
+                        ? "会社："
+                        : "Company: "}
+                    </strong>
+                    {application.company_name}
+                  </p>
 
-                {application.resume && (
+                  {user?.role === "company" && (
+                    <>
+                      <p>
+                        <strong>
+                          {isJapanese
+                            ? "応募者："
+                            : "Applicant: "}
+                        </strong>
+                        {application.applicant_name}
+                      </p>
+
+                      <p>
+                        <strong>
+                          {isJapanese
+                            ? "メール："
+                            : "Email: "}
+                        </strong>
+                        {application.applicant_email}
+                      </p>
+                    </>
+                  )}
+
+                  <p>
+                    <strong>
+                      {isJapanese
+                        ? "応募日："
+                        : "Applied: "}
+                    </strong>
+                    {formatDate(
+                      application.applied_at,
+                    )}
+                  </p>
+
+                  {user?.role === "company" &&
+                    matchAnalysis && (
+                      <section className="applicant-match-panel">
+                        <div className="applicant-match-heading">
+                          <div>
+                            <span className="match-panel-label">
+                              {isJapanese
+                                ? "AIマッチ分析"
+                                : "AI Match Analysis"}
+                            </span>
+
+                            <h3>
+                              {readinessLabels[
+                                language
+                              ][
+                                matchAnalysis.readiness
+                              ] ||
+                                matchAnalysis.readiness}
+                            </h3>
+                          </div>
+
+                          <div className="applicant-match-score">
+                            <strong>
+                              {matchScore}
+                            </strong>
+                            <span>%</span>
+                          </div>
+                        </div>
+
+                        <div
+                          className="match-progress"
+                          role="progressbar"
+                          aria-label={
+                            isJapanese
+                              ? "応募者の適合率"
+                              : "Applicant match percentage"
+                          }
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                          aria-valuenow={
+                            matchScore
+                          }
+                        >
+                          <span
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(
+                                  0,
+                                  matchScore,
+                                ),
+                              )}%`,
+                            }}
+                          />
+                        </div>
+
+                        <div className="match-skill-columns">
+                          <div>
+                            <h4>
+                              {isJapanese
+                                ? "一致するスキル"
+                                : "Matching skills"}
+                            </h4>
+
+                            <div className="match-skill-list">
+                              {matchAnalysis
+                                .matching_skills
+                                .length ? (
+                                matchAnalysis
+                                  .matching_skills
+                                  .map((skill) => (
+                                    <span
+                                      className="match-skill matched"
+                                      key={skill}
+                                    >
+                                      ✓ {skill}
+                                    </span>
+                                  ))
+                              ) : (
+                                <span className="match-empty">
+                                  {isJapanese
+                                    ? "一致するスキルはありません"
+                                    : "No matching skills detected"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4>
+                              {isJapanese
+                                ? "不足しているスキル"
+                                : "Missing skills"}
+                            </h4>
+
+                            <div className="match-skill-list">
+                              {matchAnalysis
+                                .missing_skills
+                                .length ? (
+                                matchAnalysis
+                                  .missing_skills
+                                  .map((skill) => (
+                                    <span
+                                      className="match-skill missing"
+                                      key={skill}
+                                    >
+                                      + {skill}
+                                    </span>
+                                  ))
+                              ) : (
+                                <span className="match-empty">
+                                  {isJapanese
+                                    ? "不足スキルはありません"
+                                    : "No missing skills detected"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <details className="match-breakdown">
+                          <summary>
+                            {isJapanese
+                              ? "スコアの詳細を見る"
+                              : "View score breakdown"}
+                          </summary>
+
+                          <div className="match-breakdown-grid">
+                            {Object.entries(
+                              matchAnalysis
+                                .score_breakdown,
+                            ).map(
+                              ([
+                                name,
+                                score,
+                              ]) => (
+                                <div key={name}>
+                                  <span>
+                                    {breakdownLabels[
+                                      language
+                                    ][name] ||
+                                      name.replaceAll(
+                                        "_",
+                                        " ",
+                                      )}
+                                  </span>
+
+                                  <strong>
+                                    {score}
+                                  </strong>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </details>
+                      </section>
+                    )}
+
+                  {application.cover_letter && (
+                    <div className="application-cover-letter">
+                      <h3>
+                        {isJapanese
+                          ? "カバーレター"
+                          : "Cover letter"}
+                      </h3>
+
+                      <p>
+                        {application.cover_letter}
+                      </p>
+                    </div>
+                  )}
+
+                  {application.resume && (
+                    <a
+                      className="resume-link"
+                      href={application.resume}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {isJapanese
+                        ? "履歴書を見る"
+                        : "View resume"}
+                    </a>
+                  )}
+                </div>
+
+                <div className="application-actions">
                   <a
-                    className="resume-link"
-                    href={application.resume}
-                    target="_blank"
-                    rel="noreferrer"
+                    className="secondary-button"
+                    href={`/jobs/${application.job}`}
                   >
                     {isJapanese
-                      ? "履歴書を見る"
-                      : "View resume"}
+                      ? "求人を見る"
+                      : "View job"}
                   </a>
-                )}
-              </div>
 
-              <div className="application-actions">
-                <a
-                  className="secondary-button"
-                  href={`/jobs/${application.job}`}
-                >
-                  {isJapanese
-                    ? "求人を見る"
-                    : "View job"}
-                </a>
+                  {user?.role === "student" &&
+                    ![
+                      "accepted",
+                      "rejected",
+                      "withdrawn",
+                    ].includes(
+                      application.status,
+                    ) && (
+                      <button
+                        className="delete-button"
+                        type="button"
+                        disabled={
+                          withdrawingId ===
+                          application.id
+                        }
+                        onClick={() =>
+                          withdrawApplication(
+                            application.id,
+                          )
+                        }
+                      >
+                        {withdrawingId ===
+                        application.id
+                          ? isJapanese
+                            ? "処理中..."
+                            : "Withdrawing..."
+                          : isJapanese
+                            ? "応募を辞退"
+                            : "Withdraw application"}
+                      </button>
+                    )}
 
-                {user?.role === "student" &&
-                  ![
-                    "accepted",
-                    "rejected",
-                    "withdrawn",
-                  ].includes(application.status) && (
-                    <button
-                      className="delete-button"
-                      type="button"
-                      disabled={
-                        withdrawingId === application.id
-                      }
-                      onClick={() =>
-                        withdrawApplication(application.id)
-                      }
-                    >
-                      {withdrawingId === application.id
-                        ? isJapanese
-                          ? "処理中..."
-                          : "Withdrawing..."
-                        : isJapanese
-                          ? "応募を辞退"
-                          : "Withdraw application"}
-                    </button>
-                  )}
+                  {user?.role === "company" &&
+                    application.status !==
+                      "withdrawn" && (
+                      <label className="status-control">
+                        <span>
+                          {isJapanese
+                            ? "ステータス"
+                            : "Status"}
+                        </span>
 
-                {user?.role === "company" &&
-                  application.status !== "withdrawn" && (
-                  <label className="status-control">
-                    <span>
-                      {isJapanese
-                        ? "ステータス"
-                        : "Status"}
-                    </span>
-
-                    <select
-                      value={application.status}
-                      disabled={
-                        updatingId === application.id
-                      }
-                      onChange={(event) =>
-                        updateStatus(
-                          application.id,
-                          event.target.value,
-                        )
-                      }
-                    >
-                      {statusOptions.map((status) => (
-                        <option
-                          value={status}
-                          key={status}
+                        <select
+                          value={
+                            application.status
+                          }
+                          disabled={
+                            updatingId ===
+                            application.id
+                          }
+                          onChange={(event) =>
+                            updateStatus(
+                              application.id,
+                              event.target.value,
+                            )
+                          }
                         >
-                          {statusLabels[language][status]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  )}
-              </div>
-            </article>
-          ))}
+                          {statusOptions.map(
+                            (status) => (
+                              <option
+                                value={status}
+                                key={status}
+                              >
+                                {
+                                  statusLabels[
+                                    language
+                                  ][status]
+                                }
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                    )}
+                </div>
+              </article>
+            );
+          })}
         </div>
 
         {!applications.length && !error && (

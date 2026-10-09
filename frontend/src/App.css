@@ -2315,3 +2315,157 @@
 .error-boundary-actions .back-link {
   margin: 0;
 }
+.applicant-match-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #dbe5f5;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #f7faff 0%,
+      #eef4ff 100%
+    );
+}
+
+.applicant-match-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.applicant-match-heading h3 {
+  margin: 5px 0 0;
+  color: #102247;
+  font-size: 1.15rem;
+}
+
+.match-panel-label {
+  color: #2864dc;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.applicant-match-score {
+  display: flex;
+  align-items: flex-start;
+  color: #2864dc;
+}
+
+.applicant-match-score strong {
+  font-size: 2.3rem;
+  line-height: 1;
+}
+
+.applicant-match-score span {
+  margin-top: 3px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.match-progress {
+  height: 9px;
+  margin-top: 17px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce5f5;
+}
+
+.match-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      #2864dc,
+      #6d5dfc
+    );
+}
+
+.match-skill-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 22px;
+}
+
+.match-skill-columns h4 {
+  margin: 0 0 10px;
+  color: #182a4d;
+  font-size: 0.9rem;
+}
+
+.match-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.match-skill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.match-skill.matched {
+  color: #087443;
+  background: #dff8eb;
+}
+
+.match-skill.missing {
+  color: #a3520c;
+  background: #fff0d8;
+}
+
+.match-empty {
+  color: #687793;
+  font-size: 0.82rem;
+}
+
+.match-breakdown {
+  margin-top: 18px;
+  color: #405476;
+}
+
+.match-breakdown summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.match-breakdown-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.match-breakdown-grid div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 0.8rem;
+}
+
+.match-breakdown-grid span {
+  color: #697895;
+}
+
+.match-breakdown-grid strong {
+  color: #17294e;
+}
+
+@media (max-width: 700px) {
+  .match-skill-columns,
+  .match-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -37,11 +37,12 @@ class ApplicationViewSet(
         user = self.request.user
 
         queryset = Application.objects.select_related(
-            "job",
-            "job__company",
-            "applicant",
-        )
-
+    "job",
+    "job__company",
+    "job__company__company_profile",
+    "applicant",
+    "applicant__student_profile",
+)
         if user.role == "student":
             return queryset.filter(
                 applicant=user,
