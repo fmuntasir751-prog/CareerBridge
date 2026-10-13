@@ -98,21 +98,74 @@ def calculate_resume_hash(resume):
         resume.seek(0)
 
     return digest.hexdigest()
-
-
 def validate_resume(resume):
+    file_name = str(
+        getattr(resume, "name", "") or ""
+    )
+
     extension = Path(
-        resume.name,
+        file_name
     ).suffix.lower()
 
     if extension not in ALLOWED_EXTENSIONS:
-        raise ResumeAnalysisError(
-            "Only PDF and DOCX resumes are supported."
-        )
+        try:
+            resume_url = str(
+                getattr(resume, "url", "") or ""
+            )
+        except (
+            AttributeError,
+            ValueError,
+            OSError,
+        ):
+            resume_url = ""
+
+        clean_url = resume_url.split(
+            "?",
+            maxsplit=1,
+        )[0]
+
+        extension = Path(
+            clean_url
+        ).suffix.lower()
+
+
+    if extension not in ALLOWED_EXTENSIONS:
+        try:
+            resume.open("rb")
+
+            file_signature = resume.read(8)
+
+            resume.seek(0)
+
+        except (
+            AttributeError,
+            OSError,
+            ValueError,
+        ) as error:
+            raise ResumeAnalysisError(
+                "The saved resume file could not "
+                "be opened."
+            ) from error
+
+        if file_signature.startswith(b"%PDF"):
+            extension = ".pdf"
+
+        elif file_signature.startswith(b"PK"):
+            extension = ".docx"
+
+        else:
+            raise ResumeAnalysisError(
+                "Only PDF and DOCX resumes "
+                "are supported."
+            )
 
     try:
         file_size = resume.size
-    except (AttributeError, OSError):
+
+    except (
+        AttributeError,
+        OSError,
+    ):
         file_size = None
 
     if (
@@ -124,7 +177,6 @@ def validate_resume(resume):
         )
 
     return extension
-
 
 def extract_pdf_text(resume):
     resume.open("rb")
