@@ -146,7 +146,16 @@ def validate_resume(resume):
                 "The saved resume file could not "
                 "be opened."
             ) from error
-
+        print(
+            "RESUME DEBUG:",
+            {
+                "name": file_name,
+                "url": resume_url,
+                "extension": extension,
+                "signature": repr(file_signature),
+            },
+            flush=True,
+        )
         if file_signature.startswith(b"%PDF"):
             extension = ".pdf"
 
