@@ -2820,3 +2820,100 @@
     padding: 20px;
   }
 }
+/* Global CareerBridge footer */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-content {
+  flex: 1;
+}
+
+.site-footer {
+  padding: 24px 5%;
+  color: #475569;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.site-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.site-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.site-footer-brand > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #ffffff;
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #4f46e5
+  );
+  border-radius: 13px;
+}
+
+.site-footer-brand strong,
+.site-footer-brand small {
+  display: block;
+}
+
+.site-footer-brand strong {
+  margin-bottom: 2px;
+  font-size: 1rem;
+}
+
+.site-footer-brand small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.site-footer-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.site-footer-details p {
+  margin: 0;
+}
+
+.site-footer-details span {
+  color: #cbd5e1;
+}
+
+@media (max-width: 700px) {
+  .site-footer-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-footer-details {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .site-footer-details span {
+    display: none;
+  }
+}
