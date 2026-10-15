@@ -8,7 +8,10 @@ from rest_framework.exceptions import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from profiles.models import StudentProfile
+from profiles.models import (
+    CompanyProfile,
+    StudentProfile,
+)
 
 from .matching import calculate_job_match
 from .models import Job, SavedJob
@@ -18,7 +21,10 @@ from .serializers import JobSerializer
 
 class JobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
-    permission_classes = [IsCompanyOwnerOrReadOnly]
+
+    permission_classes = [
+        IsCompanyOwnerOrReadOnly,
+    ]
 
     filter_backends = [
         filters.SearchFilter,
@@ -32,6 +38,7 @@ class JobViewSet(viewsets.ModelViewSet):
         "description_ja",
         "requirements",
         "location",
+        "company__company_profile__company_name",
     ]
 
     ordering_fields = [
@@ -41,30 +48,111 @@ class JobViewSet(viewsets.ModelViewSet):
         "salary_max",
     ]
 
+    def get_verified_company_filter(self):
+        return Q(
+            company__company_profile__verification_status=(
+    CompanyProfile
+    .VerificationStatus
+    .VERIFIED
+)
+        )
+
     def get_queryset(self):
         queryset = Job.objects.select_related(
             "company",
             "company__company_profile",
         )
 
+        verified_company_filter = Q(
+            company__company_profile__verification_status=(
+                CompanyProfile
+                .VerificationStatus
+                .VERIFIED
+            )
+        )
+
         if self.action == "list":
-            return queryset.filter(is_active=True)
+            return queryset.filter(
+                verified_company_filter,
+                is_active=True,
+            )
 
         if self.action == "retrieve":
             user = self.request.user
 
             if user.is_authenticated:
                 return queryset.filter(
-                    Q(is_active=True)
-                    | Q(company=user)
+                    Q(company=user)
+                    | (
+                        verified_company_filter
+                        & Q(is_active=True)
+                    )
                 )
 
-            return queryset.filter(is_active=True)
+            return queryset.filter(
+                verified_company_filter,
+                is_active=True,
+            )
+
+        if self.action in (
+            "match_analysis",
+            "save_job",
+        ):
+            return queryset.filter(
+                verified_company_filter,
+                is_active=True,
+            )
 
         return queryset
 
+    def get_verified_company_profile(self):
+        user = self.request.user
+
+        if user.role != "company":
+            raise PermissionDenied(
+                "Only company accounts can "
+                "manage jobs."
+            )
+
+        profile = getattr(
+            user,
+            "company_profile",
+            None,
+        )
+
+        if profile is None:
+            raise PermissionDenied(
+                "Please complete your company "
+                "profile before posting a job."
+            )
+
+        if not profile.is_verified:
+            raise PermissionDenied(
+                "Your company must be verified "
+                "before publishing jobs."
+            )
+
+        return profile
+
     def perform_create(self, serializer):
-        serializer.save(company=self.request.user)
+        self.get_verified_company_profile()
+
+        serializer.save(
+            company=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        job_will_be_active = (
+            serializer.validated_data.get(
+                "is_active",
+                serializer.instance.is_active,
+            )
+        )
+
+        if job_will_be_active:
+            self.get_verified_company_profile()
+
+        serializer.save()
 
     @action(
         detail=False,
@@ -86,7 +174,14 @@ class JobViewSet(viewsets.ModelViewSet):
         )
 
         active_jobs = (
-            Job.objects.filter(is_active=True)
+            Job.objects.filter(
+                is_active=True,
+               company__company_profile__verification_status=(
+    CompanyProfile
+    .VerificationStatus
+    .VERIFIED
+)
+            )
             .select_related(
                 "company",
                 "company__company_profile",
@@ -193,6 +288,10 @@ class JobViewSet(viewsets.ModelViewSet):
                     "title_en": job.title_en,
                     "title_ja": job.title_ja,
                     "company_name": company_name,
+                    "company_verified": bool(
+                        company_profile
+                        and company_profile.is_verified
+                    ),
                 },
                 **analysis,
             },
@@ -274,6 +373,12 @@ class JobViewSet(viewsets.ModelViewSet):
         jobs = (
             Job.objects.filter(
                 saved_by_users__user=request.user,
+                is_active=True,
+                company__company_profile__verification_status=(
+    CompanyProfile
+    .VerificationStatus
+    .VERIFIED
+)
             )
             .select_related(
                 "company",
@@ -300,7 +405,8 @@ class JobViewSet(viewsets.ModelViewSet):
     def my_jobs(self, request):
         if request.user.role != "company":
             raise PermissionDenied(
-                "Only company accounts can manage jobs."
+                "Only company accounts can "
+                "manage jobs."
             )
 
         jobs = (

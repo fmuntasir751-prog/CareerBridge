@@ -95,6 +95,20 @@ class StudentProfile(models.Model):
 
 
 class CompanyProfile(models.Model):
+    class VerificationStatus(models.TextChoices):
+        PENDING = (
+            "pending",
+            "Pending",
+        )
+        VERIFIED = (
+            "verified",
+            "Verified",
+        )
+        REJECTED = (
+            "rejected",
+            "Rejected",
+        )
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -118,16 +132,56 @@ class CompanyProfile(models.Model):
         blank=True,
     )
 
+    registration_number = models.CharField(
+        max_length=100,
+        blank=True,
+        db_index=True,
+    )
+
+    contact_person = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
+        db_index=True,
+    )
+
+    verification_note = models.TextField(
+        blank=True,
+    )
+
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     logo = models.ImageField(
         upload_to="company_logos/",
         blank=True,
         null=True,
     )
 
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    @property
+    def is_verified(self):
+        return (
+            self.verification_status
+            == self.VerificationStatus.VERIFIED
+        )
+
     def __str__(self):
         return self.company_name
-
-
 class ResumeAnalysis(models.Model):
     class Status(models.TextChoices):
         PROCESSING = (

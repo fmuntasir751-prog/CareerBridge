@@ -580,15 +580,35 @@ function Jobs() {
                 key={job.id}
               >
                 <div className="job-card-top">
-                  <span>{job.company_name}</span>
+  <div className="job-company-line">
+    <span className="job-company-name">
+      {job.company_name}
+    </span>
 
-                  <span>
-                    {getWorkplaceLabel(
-                      job.workplace_type,
-                    )}
-                  </span>
-                </div>
+    {job.company_verified && (
+      <span
+        className="verified-company-badge"
+        title={
+          isJapanese
+            ? "CareerBridgeによる認証済み企業"
+            : "Company verified by CareerBridge"
+        }
+      >
+        <span aria-hidden="true">✓</span>
 
+        {isJapanese
+          ? "認証済み企業"
+          : "Verified company"}
+      </span>
+    )}
+  </div>
+
+  <span className="job-workplace-badge">
+    {getWorkplaceLabel(
+      job.workplace_type,
+    )}
+  </span>
+</div>
                 <h2>{title}</h2>
                 <p>{description}</p>
 

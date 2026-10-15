@@ -3,7 +3,10 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from profiles.models import StudentProfile
+from profiles.models import (
+    CompanyProfile,
+    StudentProfile,
+)
 
 from .models import Job, SavedJob
 
@@ -33,7 +36,41 @@ class JobAPITestCase(APITestCase):
             password="StrongPassword123!",
             role="company",
         )
+        CompanyProfile.objects.update_or_create(
+            user=self.company,
+            defaults={
+                "company_name": "CareerBridge Tech",
+                "website": (
+                    "https://careerbridge.example.com"
+                ),
+                "location": "Osaka, Japan",
+                "registration_number": "TEST-COMPANY-001",
+                "contact_person": "Test Recruiter",
+                "verification_status": (
+                    CompanyProfile
+                    .VerificationStatus
+                    .VERIFIED
+                ),
+            },
+        )
 
+        CompanyProfile.objects.update_or_create(
+            user=self.other_company,
+            defaults={
+                "company_name": "Other Test Company",
+                "website": (
+                    "https://other-company.example.com"
+                ),
+                "location": "Tokyo, Japan",
+                "registration_number": "TEST-COMPANY-002",
+                "contact_person": "Other Recruiter",
+                "verification_status": (
+                    CompanyProfile
+                    .VerificationStatus
+                    .VERIFIED
+                ),
+            },
+        )
         self.student_profile, _ = (
             StudentProfile.objects.update_or_create(
                 user=self.student,

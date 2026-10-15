@@ -4,14 +4,22 @@ from .models import Job
 
 
 class JobSerializer(serializers.ModelSerializer):
-    company_name = serializers.SerializerMethodField()
+    company_name = (
+        serializers.SerializerMethodField()
+    )
+
+    company_verified = (
+        serializers.SerializerMethodField()
+    )
 
     class Meta:
         model = Job
+
         fields = (
             "id",
             "company",
             "company_name",
+            "company_verified",
             "title_en",
             "title_ja",
             "description_en",
@@ -28,30 +36,56 @@ class JobSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
         read_only_fields = (
             "id",
             "company",
             "company_name",
+            "company_verified",
             "created_at",
             "updated_at",
         )
 
+    def get_company_profile(self, obj):
+        return getattr(
+            obj.company,
+            "company_profile",
+            None,
+        )
+
     def get_company_name(self, obj):
-        profile = getattr(obj.company, "company_profile", None)
+        profile = self.get_company_profile(obj)
 
         if profile:
             return profile.company_name
 
         return obj.company.username
 
+    def get_company_verified(self, obj):
+        profile = self.get_company_profile(obj)
+
+        return bool(
+            profile
+            and profile.is_verified
+        )
+
     def validate(self, attrs):
         salary_min = attrs.get(
             "salary_min",
-            getattr(self.instance, "salary_min", None),
+            getattr(
+                self.instance,
+                "salary_min",
+                None,
+            ),
         )
+
         salary_max = attrs.get(
             "salary_max",
-            getattr(self.instance, "salary_max", None),
+            getattr(
+                self.instance,
+                "salary_max",
+                None,
+            ),
         )
 
         if (
@@ -62,10 +96,32 @@ class JobSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {
                     "salary_max": (
-                        "Maximum salary must be greater than "
-                        "minimum salary."
-                    )
-                }
+                        "Maximum salary must be "
+                        "greater than minimum salary."
+                    ),
+                },
+            )
+
+        deadline = attrs.get(
+            "deadline",
+            getattr(
+                self.instance,
+                "deadline",
+                None,
+            ),
+        )
+
+        if (
+            deadline is not None
+            and deadline.year < 2000
+        ):
+            raise serializers.ValidationError(
+                {
+                    "deadline": (
+                        "Enter a valid application "
+                        "deadline."
+                    ),
+                },
             )
 
         return attrs

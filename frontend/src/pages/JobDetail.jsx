@@ -224,9 +224,28 @@ function JobDetail() {
 
       <section className="job-detail-layout">
         <div className="job-detail-main">
-          <p className="eyebrow">
-            {job.company_name}
-          </p>
+          <div className="job-detail-company-row">
+  <p className="eyebrow">
+    {job.company_name}
+  </p>
+
+  {job.company_verified && (
+    <span
+      className="verified-company-badge"
+      title={
+        isJapanese
+          ? "CareerBridgeによる認証済み企業"
+          : "Company verified by CareerBridge"
+      }
+    >
+      <span aria-hidden="true">✓</span>
+
+      {isJapanese
+        ? "認証済み企業"
+        : "Verified company"}
+    </span>
+  )}
+</div>
 
           <h1>{title}</h1>
 

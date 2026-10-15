@@ -2917,3 +2917,231 @@
     display: none;
   }
 }
+/* Company verification */
+
+.company-profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.company-profile-heading h1 {
+  margin-bottom: 0.35rem;
+}
+
+.verification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.verification-badge.verified {
+  color: #067647;
+  background: #ecfdf3;
+  border-color: #abefc6;
+}
+
+.verification-badge.pending {
+  color: #93370d;
+  background: #fffaeb;
+  border-color: #fedf89;
+}
+
+.verification-badge.rejected {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.verification-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  margin: 0 0 1.35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid;
+  border-radius: 16px;
+}
+
+.verification-panel.verified {
+  color: #05603a;
+  background:
+    linear-gradient(
+      135deg,
+      #ecfdf3,
+      #f6fef9
+    );
+  border-color: #abefc6;
+}
+
+.verification-panel.pending {
+  color: #7a2e0e;
+  background:
+    linear-gradient(
+      135deg,
+      #fffaeb,
+      #fffdf5
+    );
+  border-color: #fedf89;
+}
+
+.verification-panel.rejected {
+  color: #912018;
+  background:
+    linear-gradient(
+      135deg,
+      #fef3f2,
+      #fff8f7
+    );
+  border-color: #fecdca;
+}
+
+.verification-panel-icon {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.verification-panel.verified
+.verification-panel-icon {
+  background: #079455;
+}
+
+.verification-panel.pending
+.verification-panel-icon {
+  background: #dc6803;
+}
+
+.verification-panel.rejected
+.verification-panel-icon {
+  background: #d92d20;
+}
+
+.verification-panel h2 {
+  margin: 0 0 0.3rem;
+  color: inherit;
+  font-size: 1rem;
+}
+
+.verification-panel p {
+  margin: 0;
+  color: inherit;
+  line-height: 1.6;
+}
+
+.verification-panel small {
+  display: block;
+  margin-top: 0.55rem;
+  color: inherit;
+  opacity: 0.82;
+}
+
+.verification-note {
+  margin-top: 0.65rem !important;
+  padding-top: 0.65rem;
+  border-top: 1px solid currentColor;
+}
+
+@media (max-width: 640px) {
+  .company-profile-heading {
+    flex-direction: column;
+  }
+
+  .verification-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .verification-badge {
+    align-self: flex-start;
+  }
+}
+/* Verified company job badge */
+
+.job-company-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.job-company-name {
+  overflow: hidden;
+  color: #344054;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verified-company-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid #abefc6;
+  border-radius: 999px;
+  color: #067647;
+  background: #ecfdf3;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.verified-company-badge > span {
+  display: inline-grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #079455;
+  font-size: 0.67rem;
+}
+
+.job-workplace-badge {
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .job-card-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+/* Job-detail verified company */
+
+.job-detail-company-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+
+.job-detail-company-row .eyebrow {
+  margin: 0;
+}
+
+.job-detail-company-row
+.verified-company-badge {
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.06);
+}
