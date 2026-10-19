@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -51,10 +52,25 @@ class JobViewSet(viewsets.ModelViewSet):
     def get_verified_company_filter(self):
         return Q(
             company__company_profile__verification_status=(
-    CompanyProfile
-    .VerificationStatus
-    .VERIFIED
-)
+                CompanyProfile
+                .VerificationStatus
+                .VERIFIED
+            ),
+        )
+
+    def get_public_job_filter(self):
+        today = timezone.localdate()
+
+        return (
+            self.get_verified_company_filter()
+            & Q(
+                status=Job.Status.PUBLISHED,
+                is_active=True,
+            )
+            & (
+                Q(deadline__isnull=True)
+                | Q(deadline__gte=today)
+            )
         )
 
     def get_queryset(self):
@@ -63,18 +79,13 @@ class JobViewSet(viewsets.ModelViewSet):
             "company__company_profile",
         )
 
-        verified_company_filter = Q(
-            company__company_profile__verification_status=(
-                CompanyProfile
-                .VerificationStatus
-                .VERIFIED
-            )
+        public_job_filter = (
+            self.get_public_job_filter()
         )
 
         if self.action == "list":
             return queryset.filter(
-                verified_company_filter,
-                is_active=True,
+                public_job_filter,
             )
 
         if self.action == "retrieve":
@@ -83,15 +94,11 @@ class JobViewSet(viewsets.ModelViewSet):
             if user.is_authenticated:
                 return queryset.filter(
                     Q(company=user)
-                    | (
-                        verified_company_filter
-                        & Q(is_active=True)
-                    )
+                    | public_job_filter
                 )
 
             return queryset.filter(
-                verified_company_filter,
-                is_active=True,
+                public_job_filter,
             )
 
         if self.action in (
@@ -99,13 +106,15 @@ class JobViewSet(viewsets.ModelViewSet):
             "save_job",
         ):
             return queryset.filter(
-                verified_company_filter,
-                is_active=True,
+                public_job_filter,
             )
 
         return queryset
 
-    def get_verified_company_profile(self):
+    def get_company_profile(
+        self,
+        require_verified=False,
+    ):
         user = self.request.user
 
         if user.role != "company":
@@ -123,10 +132,13 @@ class JobViewSet(viewsets.ModelViewSet):
         if profile is None:
             raise PermissionDenied(
                 "Please complete your company "
-                "profile before posting a job."
+                "profile before managing jobs."
             )
 
-        if not profile.is_verified:
+        if (
+            require_verified
+            and not profile.is_verified
+        ):
             raise PermissionDenied(
                 "Your company must be verified "
                 "before publishing jobs."
@@ -135,22 +147,38 @@ class JobViewSet(viewsets.ModelViewSet):
         return profile
 
     def perform_create(self, serializer):
-        self.get_verified_company_profile()
+        requested_status = (
+            serializer.validated_data.get(
+                "status",
+                Job.Status.PUBLISHED,
+            )
+        )
+
+        self.get_company_profile(
+            require_verified=(
+                requested_status
+                == Job.Status.PUBLISHED
+            ),
+        )
 
         serializer.save(
             company=self.request.user,
         )
 
     def perform_update(self, serializer):
-        job_will_be_active = (
+        requested_status = (
             serializer.validated_data.get(
-                "is_active",
-                serializer.instance.is_active,
+                "status",
+                serializer.instance.status,
             )
         )
 
-        if job_will_be_active:
-            self.get_verified_company_profile()
+        self.get_company_profile(
+            require_verified=(
+                requested_status
+                == Job.Status.PUBLISHED
+            ),
+        )
 
         serializer.save()
 
@@ -175,12 +203,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         active_jobs = (
             Job.objects.filter(
-                is_active=True,
-               company__company_profile__verification_status=(
-    CompanyProfile
-    .VerificationStatus
-    .VERIFIED
-)
+                self.get_public_job_filter(),
             )
             .select_related(
                 "company",
@@ -253,9 +276,10 @@ class JobViewSet(viewsets.ModelViewSet):
 
         job = self.get_object()
 
-        if not job.is_active:
+        if not job.accepts_applications:
             raise NotFound(
-                "This job is no longer active."
+                "This job is not accepting "
+                "applications."
             )
 
         profile, _ = (
@@ -292,6 +316,12 @@ class JobViewSet(viewsets.ModelViewSet):
                         company_profile
                         and company_profile.is_verified
                     ),
+                    "effective_status": (
+                        job.effective_status
+                    ),
+                    "accepts_applications": (
+                        job.accepts_applications
+                    ),
                 },
                 **analysis,
             },
@@ -311,6 +341,11 @@ class JobViewSet(viewsets.ModelViewSet):
             )
 
         job = self.get_object()
+
+        if not job.is_publicly_visible:
+            raise NotFound(
+                "This job is no longer available."
+            )
 
         if request.method == "POST":
             _, created = (
@@ -372,13 +407,8 @@ class JobViewSet(viewsets.ModelViewSet):
 
         jobs = (
             Job.objects.filter(
+                self.get_public_job_filter(),
                 saved_by_users__user=request.user,
-                is_active=True,
-                company__company_profile__verification_status=(
-    CompanyProfile
-    .VerificationStatus
-    .VERIFIED
-)
             )
             .select_related(
                 "company",
@@ -440,58 +470,112 @@ class JobViewSet(viewsets.ModelViewSet):
                 "analytics."
             )
 
+        today = timezone.localdate()
+
         company_jobs = Job.objects.filter(
             company=request.user,
         )
 
         summary = company_jobs.aggregate(
-            total_jobs=Count("id"),
+            total_jobs=Count(
+                "id",
+                distinct=True,
+            ),
+            draft_jobs=Count(
+                "id",
+                filter=Q(
+                    status=Job.Status.DRAFT,
+                ),
+                distinct=True,
+            ),
+            published_jobs=Count(
+                "id",
+                filter=(
+                    Q(
+                        status=Job.Status.PUBLISHED,
+                        is_active=True,
+                    )
+                    & (
+                        Q(deadline__isnull=True)
+                        | Q(deadline__gte=today)
+                    )
+                ),
+                distinct=True,
+            ),
+            closed_jobs=Count(
+                "id",
+                filter=Q(
+                    status=Job.Status.CLOSED,
+                ),
+                distinct=True,
+            ),
+            expired_jobs=Count(
+                "id",
+                filter=Q(
+                    status=Job.Status.PUBLISHED,
+                    deadline__lt=today,
+                ),
+                distinct=True,
+            ),
             active_jobs=Count(
                 "id",
-                filter=Q(is_active=True),
+                filter=Q(
+                    is_active=True,
+                ),
+                distinct=True,
             ),
             inactive_jobs=Count(
                 "id",
-                filter=Q(is_active=False),
+                filter=Q(
+                    is_active=False,
+                ),
+                distinct=True,
             ),
             total_applications=Count(
                 "applications",
+                distinct=True,
             ),
             pending_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="pending",
                 ),
+                distinct=True,
             ),
             reviewing_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="reviewing",
                 ),
+                distinct=True,
             ),
             interview_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="interview",
                 ),
+                distinct=True,
             ),
             accepted_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="accepted",
                 ),
+                distinct=True,
             ),
             rejected_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="rejected",
                 ),
+                distinct=True,
             ),
             withdrawn_applications=Count(
                 "applications",
                 filter=Q(
                     applications__status="withdrawn",
                 ),
+                distinct=True,
             ),
         )
 
@@ -499,12 +583,15 @@ class JobViewSet(viewsets.ModelViewSet):
             company_jobs.annotate(
                 application_count=Count(
                     "applications",
+                    distinct=True,
                 )
             )
             .values(
                 "id",
                 "title_en",
                 "title_ja",
+                "status",
+                "deadline",
                 "is_active",
                 "application_count",
                 "created_at",

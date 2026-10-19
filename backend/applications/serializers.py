@@ -137,9 +137,36 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return self.get_match_analysis(obj)
 
     def validate_job(self, job):
-        if not job.is_active:
+        company_profile = getattr(
+            job.company,
+            "company_profile",
+            None,
+        )
+
+        if (
+            company_profile is None
+            or not company_profile.is_verified
+        ):
             raise serializers.ValidationError(
-                "Applications for this job are closed."
+                "This company is not verified."
+            )
+
+        if not job.accepts_applications:
+            if job.effective_status == "expired":
+                raise serializers.ValidationError(
+                    "The application deadline "
+                    "has expired."
+                )
+
+            if job.effective_status == "draft":
+                raise serializers.ValidationError(
+                    "This job has not been "
+                    "published yet."
+                )
+
+            raise serializers.ValidationError(
+                "Applications for this job "
+                "are closed."
             )
 
         return job

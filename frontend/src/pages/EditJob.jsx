@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 const emptyJob = {
   title_en: "",
@@ -17,45 +22,64 @@ const emptyJob = {
   salary_min: "",
   salary_max: "",
   deadline: "",
-  is_active: true,
+  status: "draft",
+  effective_status: "draft",
+  accepts_applications: false,
 };
+
+function normalizeJob(data) {
+  return {
+    ...emptyJob,
+    ...data,
+    salary_min: data.salary_min ?? "",
+    salary_max: data.salary_max ?? "",
+    deadline: data.deadline ?? "",
+    status: data.status || "draft",
+    effective_status:
+      data.effective_status
+      || data.status
+      || "draft",
+  };
+}
 
 function EditJob() {
   const { id } = useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [job, setJob] = useState(emptyJob);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingAction, setSavingAction] =
+    useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const isJapanese = i18n.language.startsWith("ja");
+
+  const statusLabels = {
+    draft: isJapanese ? "下書き" : "Draft",
+    published: isJapanese ? "公開中" : "Published",
+    closed: isJapanese ? "終了" : "Closed",
+    expired: isJapanese
+      ? "募集期限終了"
+      : "Expired",
+  };
 
   useEffect(() => {
     const loadJob = async () => {
       try {
-        const response = await api.get(`/jobs/${id}/`);
+        const response = await api.get(
+          `/jobs/${id}/`,
+        );
 
-        setJob({
-          title_en: response.data.title_en || "",
-          title_ja: response.data.title_ja || "",
-          description_en: response.data.description_en || "",
-          description_ja: response.data.description_ja || "",
-          requirements: response.data.requirements || "",
-          location: response.data.location || "",
-          employment_type:
-            response.data.employment_type || "full_time",
-          workplace_type:
-            response.data.workplace_type || "onsite",
-          japanese_level:
-            response.data.japanese_level || "not_required",
-          salary_min: response.data.salary_min || "",
-          salary_max: response.data.salary_max || "",
-          deadline: response.data.deadline || "",
-          is_active: response.data.is_active,
-        });
-      } catch {
-        setError(t("jobLoadError"));
+        setJob(normalizeJob(response.data));
+      } catch (requestError) {
+        setError(
+          getApiErrorMessage(
+            requestError,
+            t("jobLoadError"),
+          ),
+        );
       } finally {
         setLoading(false);
       }
@@ -65,25 +89,52 @@ function EditJob() {
   }, [id, t]);
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value } = event.target;
 
     setJob((currentJob) => ({
       ...currentJob,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const saveJob = async (
+    event,
+    requestedStatus = job.status,
+  ) => {
     event.preventDefault();
     setMessage("");
     setError("");
-    setSaving(true);
+
+    if (
+      job.salary_min
+      && job.salary_max
+      && Number(job.salary_min)
+        > Number(job.salary_max)
+    ) {
+      setError(
+        isJapanese
+          ? "最低給与は最高給与以下にしてください。"
+          : "Minimum salary cannot exceed maximum salary.",
+      );
+      return;
+    }
+
+    setSavingAction(requestedStatus);
 
     const payload = {
-      ...job,
+      title_en: job.title_en,
+      title_ja: job.title_ja,
+      description_en: job.description_en,
+      description_ja: job.description_ja,
+      requirements: job.requirements,
+      location: job.location,
+      employment_type: job.employment_type,
+      workplace_type: job.workplace_type,
+      japanese_level: job.japanese_level,
       salary_min: job.salary_min || null,
       salary_max: job.salary_max || null,
       deadline: job.deadline || null,
+      status: requestedStatus,
     };
 
     try {
@@ -92,29 +143,49 @@ function EditJob() {
         payload,
       );
 
-      setJob({
-        ...response.data,
-        salary_min: response.data.salary_min || "",
-        salary_max: response.data.salary_max || "",
-        deadline: response.data.deadline || "",
-      });
+      setJob(normalizeJob(response.data));
 
-      setMessage(t("jobUpdated"));
-    } catch (requestError) {
-      const responseData = requestError.response?.data;
-
-      if (responseData) {
-        setError(Object.values(responseData).flat().join(" "));
-      } else {
-        setError(t("jobUpdateError"));
+      if (requestedStatus === "draft") {
+        setMessage(
+          isJapanese
+            ? "求人を下書きとして保存しました。"
+            : "The job was saved as a draft.",
+        );
+      } else if (
+        requestedStatus === "published"
+      ) {
+        setMessage(
+          isJapanese
+            ? "求人を公開しました。"
+            : "The job was published.",
+        );
+      } else if (
+        requestedStatus === "closed"
+      ) {
+        setMessage(
+          isJapanese
+            ? "求人募集を終了しました。"
+            : "The job was closed.",
+        );
       }
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("jobUpdateError"),
+        ),
+      );
     } finally {
-      setSaving(false);
+      setSavingAction("");
     }
   };
 
   if (loading) {
-    return <div className="page-loading">{t("loading")}</div>;
+    return (
+      <div className="page-loading">
+        {t("loading")}
+      </div>
+    );
   }
 
   return (
@@ -128,18 +199,51 @@ function EditJob() {
           ← {t("myPostedJobs")}
         </button>
 
-        <h1>{t("editJob")}</h1>
-        <p className="auth-subtitle">{t("editJobMessage")}</p>
+        <div className="job-editor-heading">
+          <div>
+            <h1>{t("editJob")}</h1>
+            <p className="auth-subtitle">
+              {t("editJobMessage")}
+            </p>
+          </div>
+
+          <span
+            className={`job-lifecycle-badge ${
+              job.effective_status
+            }`}
+          >
+            {statusLabels[
+              job.effective_status
+            ] || job.effective_status}
+          </span>
+        </div>
+
+        {job.effective_status === "expired" && (
+          <div className="form-message warning">
+            {isJapanese
+              ? "募集期限が終了しています。再公開するには新しい締切日を設定してください。"
+              : "This job has expired. Set a new deadline before publishing it again."}
+          </div>
+        )}
 
         {message && (
-          <div className="form-message success">{message}</div>
+          <div className="form-message success">
+            {message}
+          </div>
         )}
 
         {error && (
-          <div className="form-message error">{error}</div>
+          <div className="form-message error">
+            {error}
+          </div>
         )}
 
-        <form className="register-form" onSubmit={handleSubmit}>
+        <form
+          className="register-form"
+          onSubmit={(event) =>
+            saveJob(event, job.status)
+          }
+        >
           <label>
             {t("jobTitleEnglish")}
             <input
@@ -208,10 +312,18 @@ function EditJob() {
                 value={job.employment_type}
                 onChange={handleChange}
               >
-                <option value="full_time">{t("fullTime")}</option>
-                <option value="part_time">{t("partTime")}</option>
-                <option value="internship">{t("internship")}</option>
-                <option value="contract">{t("contract")}</option>
+                <option value="full_time">
+                  {t("fullTime")}
+                </option>
+                <option value="part_time">
+                  {t("partTime")}
+                </option>
+                <option value="internship">
+                  {t("internship")}
+                </option>
+                <option value="contract">
+                  {t("contract")}
+                </option>
               </select>
             </label>
 
@@ -222,9 +334,15 @@ function EditJob() {
                 value={job.workplace_type}
                 onChange={handleChange}
               >
-                <option value="onsite">{t("onsite")}</option>
-                <option value="remote">{t("remote")}</option>
-                <option value="hybrid">{t("hybrid")}</option>
+                <option value="onsite">
+                  {t("onsite")}
+                </option>
+                <option value="remote">
+                  {t("remote")}
+                </option>
+                <option value="hybrid">
+                  {t("hybrid")}
+                </option>
               </select>
             </label>
           </div>
@@ -236,7 +354,9 @@ function EditJob() {
               value={job.japanese_level}
               onChange={handleChange}
             >
-              <option value="not_required">{t("notRequired")}</option>
+              <option value="not_required">
+                {t("notRequired")}
+              </option>
               <option value="n3">JLPT N3</option>
               <option value="n2">JLPT N2</option>
               <option value="n1">JLPT N1</option>
@@ -277,23 +397,59 @@ function EditJob() {
             />
           </label>
 
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              name="is_active"
-              checked={job.is_active}
-              onChange={handleChange}
-            />
-            {t("activeJob")}
-          </label>
+          <div className="job-lifecycle-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={Boolean(savingAction)}
+              onClick={(event) =>
+                saveJob(event, "draft")
+              }
+            >
+              {savingAction === "draft"
+                ? t("saving")
+                : isJapanese
+                  ? "下書きとして保存"
+                  : "Save as draft"}
+            </button>
 
-          <button
-            className="submit-button"
-            type="submit"
-            disabled={saving}
-          >
-            {saving ? t("saving") : t("saveChanges")}
-          </button>
+            <button
+              className="submit-button"
+              type="button"
+              disabled={Boolean(savingAction)}
+              onClick={(event) =>
+                saveJob(event, "published")
+              }
+            >
+              {savingAction === "published"
+                ? isJapanese
+                  ? "公開しています..."
+                  : "Publishing..."
+                : isJapanese
+                  ? "求人を公開"
+                  : "Publish job"}
+            </button>
+
+            {job.effective_status
+              === "published" && (
+              <button
+                className="job-close-button"
+                type="button"
+                disabled={Boolean(savingAction)}
+                onClick={(event) =>
+                  saveJob(event, "closed")
+                }
+              >
+                {savingAction === "closed"
+                  ? isJapanese
+                    ? "終了しています..."
+                    : "Closing..."
+                  : isJapanese
+                    ? "募集を終了"
+                    : "Close job"}
+              </button>
+            )}
+          </div>
         </form>
       </section>
     </main>

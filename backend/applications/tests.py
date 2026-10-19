@@ -7,7 +7,10 @@ from jobs.models import Job
 from notifications.models import Notification
 
 from .models import Application
-
+from profiles.models import (
+    CompanyProfile,
+    StudentProfile,
+)
 
 User = get_user_model()
 
@@ -65,7 +68,47 @@ class ApplicationAPITestCase(APITestCase):
             salary_max=350000,
             is_active=True,
         )
+        CompanyProfile.objects.update_or_create(
+            user=self.company,
+            defaults={
+                "company_name": "Test Company",
+                "website": (
+                    "https://company.example.com"
+                ),
+                "location": "Osaka, Japan",
+                "registration_number": (
+                    "APPLICATION-TEST-001"
+                ),
+                "contact_person": "Test Recruiter",
+                "verification_status": (
+                    CompanyProfile
+                    .VerificationStatus
+                    .VERIFIED
+                ),
+            },
+        )
 
+        CompanyProfile.objects.update_or_create(
+            user=self.other_company,
+            defaults={
+                "company_name": (
+                    "Other Test Company"
+                ),
+                "website": (
+                    "https://other-company.example.com"
+                ),
+                "location": "Tokyo, Japan",
+                "registration_number": (
+                    "APPLICATION-TEST-002"
+                ),
+                "contact_person": "Other Recruiter",
+                "verification_status": (
+                    CompanyProfile
+                    .VerificationStatus
+                    .VERIFIED
+                ),
+            },
+        )
     def create_application(
         self,
         applicant=None,

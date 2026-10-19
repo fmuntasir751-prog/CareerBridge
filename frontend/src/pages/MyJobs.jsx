@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 function MyJobs() {
   const { t, i18n } = useTranslation();
@@ -10,17 +12,36 @@ function MyJobs() {
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] =
+    useState(null);
   const [error, setError] = useState("");
 
   const isJapanese = i18n.language.startsWith("ja");
 
+  const statusLabels = {
+    draft: isJapanese ? "下書き" : "Draft",
+    published: isJapanese ? "公開中" : "Published",
+    closed: isJapanese ? "終了" : "Closed",
+    expired: isJapanese
+      ? "募集期限終了"
+      : "Expired",
+  };
+
   useEffect(() => {
     const loadJobs = async () => {
       try {
-        const response = await api.get("/jobs/mine/");
+        const response = await api.get(
+          "/jobs/mine/",
+        );
+
         setJobs(response.data);
-      } catch {
-        setError(t("myJobsLoadError"));
+      } catch (requestError) {
+        setError(
+          getApiErrorMessage(
+            requestError,
+            t("myJobsLoadError"),
+          ),
+        );
       } finally {
         setLoading(false);
       }
@@ -29,14 +50,18 @@ function MyJobs() {
     loadJobs();
   }, [t]);
 
-  const toggleJobStatus = async (job) => {
+  const updateJobStatus = async (
+    job,
+    nextStatus,
+  ) => {
     setError("");
+    setUpdatingId(job.id);
 
     try {
       const response = await api.patch(
         `/jobs/${job.id}/`,
         {
-          is_active: !job.is_active,
+          status: nextStatus,
         },
       );
 
@@ -47,8 +72,15 @@ function MyJobs() {
             : currentJob,
         ),
       );
-    } catch {
-      setError(t("jobUpdateError"));
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("jobUpdateError"),
+        ),
+      );
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -67,10 +99,17 @@ function MyJobs() {
       await api.delete(`/jobs/${jobId}/`);
 
       setJobs((currentJobs) =>
-        currentJobs.filter((job) => job.id !== jobId),
+        currentJobs.filter(
+          (job) => job.id !== jobId,
+        ),
       );
-    } catch {
-      setError(t("jobDeleteError"));
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          t("jobDeleteError"),
+        ),
+      );
     }
   };
 
@@ -92,7 +131,9 @@ function MyJobs() {
 
         <button
           type="button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           ← {t("dashboard")}
         </button>
@@ -127,6 +168,18 @@ function MyJobs() {
                 ? job.title_ja
                 : job.title_en;
 
+            const effectiveStatus =
+              job.effective_status
+              || job.status
+              || (
+                job.is_active
+                  ? "published"
+                  : "closed"
+              );
+
+            const isUpdating =
+              updatingId === job.id;
+
             return (
               <article
                 className="application-card"
@@ -134,25 +187,38 @@ function MyJobs() {
               >
                 <div>
                   <span
-                    className={
-                      job.is_active
-                        ? "status-badge"
-                        : "status-badge inactive"
-                    }
+                    className={`job-lifecycle-badge ${effectiveStatus}`}
                   >
-                    {job.is_active
-                      ? t("active")
-                      : t("inactive")}
+                    {statusLabels[effectiveStatus]
+                      || effectiveStatus}
                   </span>
 
                   <h2>{title}</h2>
                   <p>{job.location}</p>
 
+                  {job.deadline && (
+                    <p className="job-deadline-text">
+                      {isJapanese
+                        ? "応募締切"
+                        : "Application deadline"}
+                      :{" "}
+                      {new Date(
+                        `${job.deadline}T00:00:00`,
+                      ).toLocaleDateString(
+                        isJapanese
+                          ? "ja-JP"
+                          : "en-US",
+                      )}
+                    </p>
+                  )}
+
                   <small>
                     {new Date(
                       job.created_at,
                     ).toLocaleDateString(
-                      isJapanese ? "ja-JP" : "en-US",
+                      isJapanese
+                        ? "ja-JP"
+                        : "en-US",
                     )}
                   </small>
                 </div>
@@ -165,27 +231,97 @@ function MyJobs() {
                     {t("editJob")}
                   </a>
 
-                  <a
-                    className="secondary-button"
-                    href={`/jobs/${job.id}`}
-                  >
-                    {t("viewDetails")}
-                  </a>
+                  {effectiveStatus
+                    === "published" && (
+                    <a
+                      className="secondary-button"
+                      href={`/jobs/${job.id}`}
+                    >
+                      {t("viewDetails")}
+                    </a>
+                  )}
 
-                  <button
-                    className="status-button"
-                    type="button"
-                    onClick={() => toggleJobStatus(job)}
-                  >
-                    {job.is_active
-                      ? t("deactivate")
-                      : t("activate")}
-                  </button>
+                  {effectiveStatus === "draft" && (
+                    <button
+                      className="status-button"
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() =>
+                        updateJobStatus(
+                          job,
+                          "published",
+                        )
+                      }
+                    >
+                      {isUpdating
+                        ? isJapanese
+                          ? "公開中..."
+                          : "Publishing..."
+                        : isJapanese
+                          ? "公開"
+                          : "Publish"}
+                    </button>
+                  )}
+
+                  {effectiveStatus
+                    === "published" && (
+                    <button
+                      className="job-close-button"
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() =>
+                        updateJobStatus(
+                          job,
+                          "closed",
+                        )
+                      }
+                    >
+                      {isJapanese
+                        ? "募集を終了"
+                        : "Close job"}
+                    </button>
+                  )}
+
+                  {effectiveStatus === "closed" && (
+                    <button
+                      className="status-button"
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() =>
+                        updateJobStatus(
+                          job,
+                          "published",
+                        )
+                      }
+                    >
+                      {isJapanese
+                        ? "再公開"
+                        : "Republish"}
+                    </button>
+                  )}
+
+                  {effectiveStatus === "expired" && (
+                    <button
+                      className="status-button"
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/jobs/${job.id}/edit`,
+                        )
+                      }
+                    >
+                      {isJapanese
+                        ? "締切日を更新"
+                        : "Update deadline"}
+                    </button>
+                  )}
 
                   <button
                     className="delete-button"
                     type="button"
-                    onClick={() => deleteJob(job.id)}
+                    onClick={() =>
+                      deleteJob(job.id)
+                    }
                   >
                     {t("delete")}
                   </button>

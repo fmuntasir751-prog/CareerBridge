@@ -19,8 +19,24 @@ const initialJob = {
   salary_min: "",
   salary_max: "",
   deadline: "",
-  is_active: true,
+  status: "draft",
+  is_active: false,
 };
+
+function getTodayValue() {
+  const today = new Date();
+  const year = today.getFullYear();
+
+  const month = String(
+    today.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    today.getDate(),
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 function CreateJob() {
   const { t, i18n } = useTranslation();
@@ -29,11 +45,8 @@ function CreateJob() {
   const isJapanese = i18n.language.startsWith("ja");
 
   const [job, setJob] = useState(initialJob);
-
-  const [
-    companyProfile,
-    setCompanyProfile,
-  ] = useState(null);
+  const [companyProfile, setCompanyProfile] =
+    useState(null);
 
   const [
     checkingVerification,
@@ -42,7 +55,8 @@ function CreateJob() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] =
+    useState("");
 
   useEffect(() => {
     const checkCompanyVerification = async () => {
@@ -84,10 +98,18 @@ function CreateJob() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const requestedStatus = (
+      event.nativeEvent.submitter?.value
+      || "draft"
+    );
+
     setMessage("");
     setError("");
 
-    if (!companyProfile?.is_verified) {
+    if (
+      requestedStatus === "published"
+      && !companyProfile?.is_verified
+    ) {
       setError(
         isJapanese
           ? (
@@ -124,29 +146,87 @@ function CreateJob() {
       return;
     }
 
-    setLoading(true);
+    if (
+      requestedStatus === "published"
+      && job.deadline
+      && job.deadline < getTodayValue()
+    ) {
+      setError(
+        isJapanese
+          ? (
+            "公開する求人には、今日以降の"
+            + "応募期限を設定してください。"
+          )
+          : (
+            "A published job must have an "
+            + "application deadline of today "
+            + "or later."
+          ),
+      );
+
+      return;
+    }
+
+    setLoadingAction(requestedStatus);
 
     const payload = {
       ...job,
+      status: requestedStatus,
+      is_active: requestedStatus === "published",
       salary_min: job.salary_min || null,
       salary_max: job.salary_max || null,
       deadline: job.deadline || null,
     };
 
     try {
-      await api.post("/jobs/", payload);
+      const response = await api.post(
+        "/jobs/",
+        payload,
+      );
 
-      setMessage(t("jobCreated"));
+      const createdStatus = (
+        response.data.effective_status
+        || response.data.status
+      );
+
+      setMessage(
+        createdStatus === "published"
+          ? (
+            isJapanese
+              ? "求人を公開しました。"
+              : "Job published successfully."
+          )
+          : (
+            isJapanese
+              ? "求人を下書きとして保存しました。"
+              : "Job saved as a draft."
+          ),
+      );
+
       setJob(initialJob);
+
+      window.setTimeout(() => {
+        navigate("/my-jobs");
+      }, 900);
     } catch (requestError) {
       setError(
         getApiErrorMessage(
           requestError,
-          t("jobCreateError"),
+          requestedStatus === "published"
+            ? (
+              isJapanese
+                ? "求人を公開できませんでした。"
+                : "Could not publish the job."
+            )
+            : (
+              isJapanese
+                ? "下書きを保存できませんでした。"
+                : "Could not save the draft."
+            ),
         ),
       );
     } finally {
-      setLoading(false);
+      setLoadingAction("");
     }
   };
 
@@ -158,118 +238,16 @@ function CreateJob() {
     );
   }
 
-  if (
-    companyProfile
-    && !companyProfile.is_verified
-  ) {
-    const isRejected = (
-      companyProfile.verification_status
-      === "rejected"
-    );
+  const isVerified = Boolean(
+    companyProfile?.is_verified,
+  );
 
-    return (
-      <main className="auth-page">
-        <section
-          className="auth-card profile-form-card"
-        >
-          <button
-            className="back-button"
-            type="button"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← {t("dashboard")}
-          </button>
+  const isRejected = (
+    companyProfile?.verification_status
+    === "rejected"
+  );
 
-          <section
-            className={
-              `verification-panel ${
-                isRejected
-                  ? "rejected"
-                  : "pending"
-              }`
-            }
-          >
-            <div
-              className="verification-panel-icon"
-              aria-hidden="true"
-            >
-              {isRejected ? "!" : "…"}
-            </div>
-
-            <div>
-              <h1>
-                {isRejected
-                  ? (
-                    isJapanese
-                      ? "企業認証が却下されました"
-                      : "Company verification rejected"
-                  )
-                  : (
-                    isJapanese
-                      ? "企業認証を確認中です"
-                      : "Company verification pending"
-                  )}
-              </h1>
-
-              <p>
-                {isRejected
-                  ? (
-                    isJapanese
-                      ? (
-                        "企業情報を修正して、"
-                        + "管理者の確認を受けてください。"
-                      )
-                      : (
-                        "Update your company "
-                        + "information and request "
-                        + "another administrator review."
-                      )
-                  )
-                  : (
-                    isJapanese
-                      ? (
-                        "管理者による確認が完了すると、"
-                        + "求人を公開できます。"
-                      )
-                      : (
-                        "You can publish jobs after "
-                        + "an administrator verifies "
-                        + "your company."
-                      )
-                  )}
-              </p>
-
-              {companyProfile.verification_note && (
-                <p className="verification-note">
-                  <strong>
-                    {isJapanese
-                      ? "管理者からのメモ："
-                      : "Administrator note:"}
-                  </strong>{" "}
-                  {
-                    companyProfile
-                      .verification_note
-                  }
-                </p>
-              )}
-            </div>
-          </section>
-
-          <button
-            className="submit-button"
-            type="button"
-            onClick={() =>
-              navigate("/company-profile")
-            }
-          >
-            {isJapanese
-              ? "企業プロフィールを確認"
-              : "Review company profile"}
-          </button>
-        </section>
-      </main>
-    );
-  }
+  const isSaving = Boolean(loadingAction);
 
   return (
     <main className="auth-page">
@@ -289,17 +267,104 @@ function CreateJob() {
             <h1>{t("postJob")}</h1>
 
             <p className="auth-subtitle">
-              {t("postJobMessage")}
+              {isJapanese
+                ? (
+                  "求人を下書きとして保存するか、"
+                  + "学生向けに公開できます。"
+                )
+                : (
+                  "Save the job as a draft or "
+                  + "publish it for students."
+                )}
             </p>
           </div>
 
-          <span className="verification-badge verified">
-            ✓{" "}
-            {isJapanese
-              ? "認証済み企業"
-              : "Verified company"}
-          </span>
+          {isVerified && (
+            <span
+              className="verification-badge verified"
+            >
+              ✓{" "}
+              {isJapanese
+                ? "認証済み企業"
+                : "Verified company"}
+            </span>
+          )}
         </div>
+
+        {!isVerified && companyProfile && (
+          <section
+            className={
+              `verification-panel ${
+                isRejected
+                  ? "rejected"
+                  : "pending"
+              }`
+            }
+          >
+            <div
+              className="verification-panel-icon"
+              aria-hidden="true"
+            >
+              {isRejected ? "!" : "…"}
+            </div>
+
+            <div>
+              <h2>
+                {isRejected
+                  ? (
+                    isJapanese
+                      ? "企業認証が却下されました"
+                      : "Company verification rejected"
+                  )
+                  : (
+                    isJapanese
+                      ? "企業認証を確認中です"
+                      : "Company verification pending"
+                  )}
+              </h2>
+
+              <p>
+                {isJapanese
+                  ? (
+                    "現在は下書きの保存ができます。"
+                    + "求人を公開するには企業認証が"
+                    + "必要です。"
+                  )
+                  : (
+                    "You can save drafts now. "
+                    + "Company verification is "
+                    + "required to publish jobs."
+                  )}
+              </p>
+
+              {companyProfile.verification_note && (
+                <p className="verification-note">
+                  <strong>
+                    {isJapanese
+                      ? "管理者からのメモ："
+                      : "Administrator note:"}
+                  </strong>{" "}
+                  {
+                    companyProfile
+                      .verification_note
+                  }
+                </p>
+              )}
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() =>
+                  navigate("/company-profile")
+                }
+              >
+                {isJapanese
+                  ? "企業プロフィールを確認"
+                  : "Review company profile"}
+              </button>
+            </div>
+          </section>
+        )}
 
         {message && (
           <div className="form-message success">
@@ -495,18 +560,66 @@ function CreateJob() {
               name="deadline"
               value={job.deadline}
               onChange={handleChange}
+              min={getTodayValue()}
             />
           </label>
 
-          <button
-            className="submit-button"
-            type="submit"
-            disabled={loading}
-          >
-            {loading
-              ? t("postingJob")
-              : t("postJob")}
-          </button>
+          <div className="job-lifecycle-actions">
+            <button
+              className="secondary-button"
+              type="submit"
+              name="jobAction"
+              value="draft"
+              disabled={isSaving}
+            >
+              {loadingAction === "draft"
+                ? (
+                  isJapanese
+                    ? "保存中..."
+                    : "Saving..."
+                )
+                : (
+                  isJapanese
+                    ? "下書きとして保存"
+                    : "Save as Draft"
+                )}
+            </button>
+
+            <button
+              className="submit-button"
+              type="submit"
+              name="jobAction"
+              value="published"
+              disabled={
+                isSaving
+                || !isVerified
+              }
+              title={
+                isVerified
+                  ? ""
+                  : (
+                    isJapanese
+                      ? "企業認証が必要です"
+                      : (
+                        "Company verification "
+                        + "is required"
+                      )
+                  )
+              }
+            >
+              {loadingAction === "published"
+                ? (
+                  isJapanese
+                    ? "公開中..."
+                    : "Publishing..."
+                )
+                : (
+                  isJapanese
+                    ? "求人を公開"
+                    : "Publish Job"
+                )}
+            </button>
+          </div>
         </form>
       </section>
     </main>

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-
+from django.utils import timezone
 
 class Job(models.Model):
     class EmploymentType(models.TextChoices):
@@ -19,7 +19,10 @@ class Job(models.Model):
         N3 = "n3", "JLPT N3"
         N2 = "n2", "JLPT N2"
         N1 = "n1", "JLPT N1"
-
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PUBLISHED = "published", "Published"
+        CLOSED = "closed", "Closed"
     company = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -64,6 +67,12 @@ class Job(models.Model):
     )
 
     deadline = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PUBLISHED,
+        db_index=True,
+    )
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,7 +80,38 @@ class Job(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+    @property
+    def is_expired(self):
+        return bool(
+            self.deadline
+            and self.deadline < timezone.localdate()
+        )
 
+    @property
+    def effective_status(self):
+        if (
+            self.status == self.Status.PUBLISHED
+            and self.is_expired
+        ):
+            return "expired"
+
+        return self.status
+
+    @property
+    def accepts_applications(self):
+        return (
+            self.status == self.Status.PUBLISHED
+            and self.is_active
+            and not self.is_expired
+        )
+
+    @property
+    def is_publicly_visible(self):
+        return (
+            self.status == self.Status.PUBLISHED
+            and self.is_active
+            and not self.is_expired
+        )
     def __str__(self):
         return self.title_en
 class SavedJob(models.Model):

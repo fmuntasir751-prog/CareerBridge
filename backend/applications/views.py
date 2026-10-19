@@ -68,19 +68,45 @@ class ApplicationViewSet(
         user = self.request.user
         job = serializer.validated_data["job"]
 
+        if user.role != "student":
+            raise ValidationError(
+                "Only student accounts can "
+                "apply for jobs."
+            )
+
+        company_profile = getattr(
+            job.company,
+            "company_profile",
+            None,
+        )
+
+        if (
+            company_profile is None
+            or not company_profile.is_verified
+        ):
+            raise ValidationError(
+                "This company is not verified."
+            )
+
+        if not job.accepts_applications:
+            raise ValidationError(
+                "This job is not accepting "
+                "applications."
+            )
+
         if Application.objects.filter(
             job=job,
             applicant=user,
         ).exists():
             raise ValidationError(
-                "You have already applied for this job."
+                "You have already applied for "
+                "this job."
             )
 
         serializer.save(
             applicant=user,
             status=Application.Status.PENDING,
         )
-
     def perform_update(self, serializer):
         previous_status = (
             serializer.instance.status

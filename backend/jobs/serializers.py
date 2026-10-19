@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Job
@@ -10,6 +11,14 @@ class JobSerializer(serializers.ModelSerializer):
 
     company_verified = (
         serializers.SerializerMethodField()
+    )
+
+    effective_status = serializers.CharField(
+        read_only=True,
+    )
+
+    accepts_applications = serializers.BooleanField(
+        read_only=True,
     )
 
     class Meta:
@@ -32,6 +41,9 @@ class JobSerializer(serializers.ModelSerializer):
             "salary_min",
             "salary_max",
             "deadline",
+            "status",
+            "effective_status",
+            "accepts_applications",
             "is_active",
             "created_at",
             "updated_at",
@@ -42,6 +54,8 @@ class JobSerializer(serializers.ModelSerializer):
             "company",
             "company_name",
             "company_verified",
+            "effective_status",
+            "accepts_applications",
             "created_at",
             "updated_at",
         )
@@ -120,6 +134,50 @@ class JobSerializer(serializers.ModelSerializer):
                     "deadline": (
                         "Enter a valid application "
                         "deadline."
+                    ),
+                },
+            )
+
+        current_status = getattr(
+            self.instance,
+            "status",
+            Job.Status.PUBLISHED,
+        )
+
+        job_status = attrs.get(
+            "status",
+            current_status,
+        )
+
+        # Support the existing is_active toggle.
+        if (
+            "is_active" in attrs
+            and "status" not in attrs
+        ):
+            job_status = (
+                Job.Status.PUBLISHED
+                if attrs["is_active"]
+                else Job.Status.CLOSED
+            )
+
+            attrs["status"] = job_status
+
+        # Keep status and is_active synchronized.
+        if "status" in attrs:
+            attrs["is_active"] = (
+                job_status == Job.Status.PUBLISHED
+            )
+
+        if (
+            job_status == Job.Status.PUBLISHED
+            and deadline is not None
+            and deadline < timezone.localdate()
+        ):
+            raise serializers.ValidationError(
+                {
+                    "deadline": (
+                        "A published job cannot have "
+                        "a deadline in the past."
                     ),
                 },
             )
