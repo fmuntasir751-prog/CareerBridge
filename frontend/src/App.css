@@ -3252,3 +3252,18 @@
     grid-template-columns: 1fr;
   }
 }
+.analytics-progress-bar.lifecycle-published {
+  background: #22c55e;
+}
+
+.analytics-progress-bar.lifecycle-draft {
+  background: #eab308;
+}
+
+.analytics-progress-bar.lifecycle-closed {
+  background: #64748b;
+}
+
+.analytics-progress-bar.lifecycle-expired {
+  background: #ef4444;
+}

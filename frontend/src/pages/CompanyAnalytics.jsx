@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import api from "../services/api";
+import api, {
+  getApiErrorMessage,
+} from "../services/api";
 
 function CompanyAnalytics() {
   const { i18n } = useTranslation();
@@ -22,11 +24,14 @@ function CompanyAnalytics() {
         );
 
         setAnalytics(response.data);
-      } catch {
+      } catch (requestError) {
         setError(
-          isJapanese
-            ? "分析データを読み込めませんでした。"
-            : "Could not load analytics data.",
+          getApiErrorMessage(
+            requestError,
+            isJapanese
+              ? "分析データを読み込めませんでした。"
+              : "Could not load analytics data.",
+          ),
         );
       } finally {
         setLoading(false);
@@ -39,7 +44,9 @@ function CompanyAnalytics() {
   if (loading) {
     return (
       <div className="page-loading">
-        {isJapanese ? "読み込み中..." : "Loading..."}
+        {isJapanese
+          ? "読み込み中..."
+          : "Loading..."}
       </div>
     );
   }
@@ -48,7 +55,13 @@ function CompanyAnalytics() {
     return (
       <div className="page-loading">
         <div>
-          <p>{error}</p>
+          <p>
+            {error || (
+              isJapanese
+                ? "分析データがありません。"
+                : "Analytics data is unavailable."
+            )}
+          </p>
 
           <button
             type="button"
@@ -63,71 +76,184 @@ function CompanyAnalytics() {
     );
   }
 
-  const { summary, jobs } = analytics;
+  const summary = analytics.summary || {};
+  const jobs = analytics.jobs || [];
+
+  const totalJobs = summary.total_jobs || 0;
+
+  const publishedJobs = (
+    summary.published_jobs
+    ?? summary.active_jobs
+    ?? 0
+  );
+
+  const draftJobs = summary.draft_jobs || 0;
+  const closedJobs = summary.closed_jobs || 0;
+  const expiredJobs = summary.expired_jobs || 0;
+
+  const totalApplications = (
+    summary.total_applications || 0
+  );
 
   const summaryCards = [
     {
-      label: isJapanese ? "投稿した求人" : "Total jobs",
-      value: summary.total_jobs,
+      label: isJapanese
+        ? "投稿した求人"
+        : "Total jobs",
+      value: totalJobs,
       icon: "💼",
     },
     {
-      label: isJapanese ? "公開中の求人" : "Active jobs",
-      value: summary.active_jobs,
+      label: isJapanese
+        ? "公開中の求人"
+        : "Published jobs",
+      value: publishedJobs,
       icon: "✅",
     },
     {
-      label: isJapanese ? "応募者数" : "Applications",
-      value: summary.total_applications,
+      label: isJapanese
+        ? "応募者数"
+        : "Applications",
+      value: totalApplications,
       icon: "👥",
     },
     {
-      label: isJapanese ? "採用者数" : "Accepted",
-      value: summary.accepted_applications,
+      label: isJapanese
+        ? "採用者数"
+        : "Accepted",
+      value: (
+        summary.accepted_applications || 0
+      ),
       icon: "🎉",
     },
   ];
 
-  const statusData = [
+  const applicationStatusData = [
     {
       key: "pending",
-      label: isJapanese ? "応募済み" : "Pending",
-      value: summary.pending_applications,
+      label: isJapanese
+        ? "応募済み"
+        : "Pending",
+      value: (
+        summary.pending_applications || 0
+      ),
     },
     {
       key: "reviewing",
-      label: isJapanese ? "選考中" : "Reviewing",
-      value: summary.reviewing_applications,
+      label: isJapanese
+        ? "選考中"
+        : "Reviewing",
+      value: (
+        summary.reviewing_applications || 0
+      ),
     },
     {
       key: "interview",
-      label: isJapanese ? "面接" : "Interview",
-      value: summary.interview_applications,
+      label: isJapanese
+        ? "面接"
+        : "Interview",
+      value: (
+        summary.interview_applications || 0
+      ),
     },
     {
       key: "accepted",
-      label: isJapanese ? "採用" : "Accepted",
-      value: summary.accepted_applications,
+      label: isJapanese
+        ? "採用"
+        : "Accepted",
+      value: (
+        summary.accepted_applications || 0
+      ),
     },
     {
       key: "rejected",
-      label: isJapanese ? "不採用" : "Rejected",
-      value: summary.rejected_applications,
+      label: isJapanese
+        ? "不採用"
+        : "Rejected",
+      value: (
+        summary.rejected_applications || 0
+      ),
     },
     {
       key: "withdrawn",
-      label: isJapanese ? "辞退" : "Withdrawn",
-      value: summary.withdrawn_applications,
+      label: isJapanese
+        ? "辞退"
+        : "Withdrawn",
+      value: (
+        summary.withdrawn_applications || 0
+      ),
     },
   ];
 
-  const totalApplications =
-    summary.total_applications || 0;
+  const jobLifecycleData = [
+    {
+      key: "published",
+      label: isJapanese
+        ? "公開中"
+        : "Published",
+      value: publishedJobs,
+    },
+    {
+      key: "draft",
+      label: isJapanese
+        ? "下書き"
+        : "Draft",
+      value: draftJobs,
+    },
+    {
+      key: "closed",
+      label: isJapanese
+        ? "終了"
+        : "Closed",
+      value: closedJobs,
+    },
+    {
+      key: "expired",
+      label: isJapanese
+        ? "期限切れ"
+        : "Expired",
+      value: expiredJobs,
+    },
+  ];
 
   const maximumJobApplications = Math.max(
-    ...jobs.map((job) => job.application_count),
+    ...jobs.map(
+      (job) => job.application_count || 0,
+    ),
     1,
   );
+
+  const getLifecycleLabel = (lifecycleStatus) => {
+    const labels = {
+      draft: isJapanese ? "下書き" : "Draft",
+      published: isJapanese
+        ? "公開中"
+        : "Published",
+      closed: isJapanese ? "終了" : "Closed",
+      expired: isJapanese
+        ? "期限切れ"
+        : "Expired",
+    };
+
+    return (
+      labels[lifecycleStatus]
+      || lifecycleStatus
+    );
+  };
+
+  const getEffectiveStatus = (job) => {
+    if (job.effective_status) {
+      return job.effective_status;
+    }
+
+    if (job.status) {
+      return job.status;
+    }
+
+    return job.is_active
+      ? "published"
+      : "closed";
+  };
 
   return (
     <main className="analytics-page">
@@ -141,7 +267,10 @@ function CompanyAnalytics() {
           type="button"
           onClick={() => navigate("/dashboard")}
         >
-          ← {isJapanese ? "ダッシュボード" : "Dashboard"}
+          ←{" "}
+          {isJapanese
+            ? "ダッシュボード"
+            : "Dashboard"}
         </button>
       </header>
 
@@ -162,8 +291,14 @@ function CompanyAnalytics() {
 
             <p>
               {isJapanese
-                ? "求人と応募状況を確認できます。"
-                : "Track your jobs and application performance."}
+                ? (
+                  "求人の公開状況と応募状況を"
+                  + "確認できます。"
+                )
+                : (
+                  "Track job lifecycle and "
+                  + "application performance."
+                )}
             </p>
           </div>
 
@@ -172,7 +307,9 @@ function CompanyAnalytics() {
             type="button"
             onClick={() => navigate("/jobs/new")}
           >
-            {isJapanese ? "求人を投稿" : "Post a job"}
+            {isJapanese
+              ? "求人を作成"
+              : "Create a job"}
           </button>
         </div>
 
@@ -182,7 +319,9 @@ function CompanyAnalytics() {
               className="analytics-summary-card"
               key={card.label}
             >
-              <span>{card.icon}</span>
+              <span aria-hidden="true">
+                {card.icon}
+              </span>
 
               <div>
                 <small>{card.label}</small>
@@ -213,11 +352,81 @@ function CompanyAnalytics() {
             </div>
 
             <div className="status-analytics-list">
-              {statusData.map((item) => {
-                const percentage = totalApplications
+              {applicationStatusData.map(
+                (item) => {
+                  const percentage =
+                    totalApplications
+                      ? Math.round(
+                          (
+                            item.value
+                            / totalApplications
+                          ) * 100,
+                        )
+                      : 0;
+
+                  return (
+                    <div
+                      className="status-analytics-item"
+                      key={item.key}
+                    >
+                      <div>
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+
+                      <div className="analytics-progress">
+                        <span
+                          className={
+                            `analytics-progress-bar `
+                            + `status-${item.key}`
+                          }
+                          style={{
+                            width: `${percentage}%`,
+                          }}
+                        />
+                      </div>
+
+                      <small>{percentage}%</small>
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </section>
+
+          <section className="analytics-panel">
+            <div className="analytics-panel-heading">
+              <div>
+                <h2>
+                  {isJapanese
+                    ? "求人ライフサイクル"
+                    : "Job lifecycle"}
+                </h2>
+
+                <p>
+                  {isJapanese
+                    ? (
+                      "下書き、公開中、終了、"
+                      + "期限切れの内訳"
+                    )
+                    : (
+                      "Draft, published, closed "
+                      + "and expired jobs"
+                    )}
+                </p>
+              </div>
+
+              <strong>{totalJobs}</strong>
+            </div>
+
+            <div className="status-analytics-list">
+              {jobLifecycleData.map((item) => {
+                const percentage = totalJobs
                   ? Math.round(
-                      (item.value / totalApplications) *
-                        100,
+                      (
+                        item.value
+                        / totalJobs
+                      ) * 100,
                     )
                   : 0;
 
@@ -227,13 +436,24 @@ function CompanyAnalytics() {
                     key={item.key}
                   >
                     <div>
-                      <span>{item.label}</span>
+                      <span
+                        className={
+                          `job-lifecycle-badge `
+                          + item.key
+                        }
+                      >
+                        {item.label}
+                      </span>
+
                       <strong>{item.value}</strong>
                     </div>
 
                     <div className="analytics-progress">
                       <span
-                        className={`analytics-progress-bar status-${item.key}`}
+                        className={
+                          `analytics-progress-bar `
+                          + `lifecycle-${item.key}`
+                        }
                         style={{
                           width: `${percentage}%`,
                         }}
@@ -246,71 +466,14 @@ function CompanyAnalytics() {
               })}
             </div>
           </section>
-
-          <section className="analytics-panel">
-            <div className="analytics-panel-heading">
-              <div>
-                <h2>
-                  {isJapanese
-                    ? "求人の状態"
-                    : "Job activity"}
-                </h2>
-
-                <p>
-                  {isJapanese
-                    ? "公開中と非公開の求人"
-                    : "Active and inactive jobs"}
-                </p>
-              </div>
-            </div>
-
-            <div className="job-activity-chart">
-              <article>
-                <div
-                  className="job-activity-circle active"
-                  style={{
-                    "--value": summary.total_jobs
-                      ? `${
-                          (summary.active_jobs /
-                            summary.total_jobs) *
-                          100
-                        }%`
-                      : "0%",
-                  }}
-                >
-                  <strong>{summary.active_jobs}</strong>
-                </div>
-
-                <span>
-                  {isJapanese ? "公開中" : "Active"}
-                </span>
-              </article>
-
-              <article>
-                <div
-                  className="job-activity-circle inactive"
-                  style={{
-                    "--value": summary.total_jobs
-                      ? `${
-                          (summary.inactive_jobs /
-                            summary.total_jobs) *
-                          100
-                        }%`
-                      : "0%",
-                  }}
-                >
-                  <strong>{summary.inactive_jobs}</strong>
-                </div>
-
-                <span>
-                  {isJapanese ? "非公開" : "Inactive"}
-                </span>
-              </article>
-            </div>
-          </section>
         </div>
 
-        <section className="analytics-panel job-performance-panel">
+        <section
+          className={
+            "analytics-panel "
+            + "job-performance-panel"
+          }
+        >
           <div className="analytics-panel-heading">
             <div>
               <h2>
@@ -321,8 +484,14 @@ function CompanyAnalytics() {
 
               <p>
                 {isJapanese
-                  ? "応募が多い求人を確認できます。"
-                  : "See which jobs attract the most candidates."}
+                  ? (
+                    "求人ごとの公開状態と応募数を"
+                    + "確認できます。"
+                  )
+                  : (
+                    "Compare lifecycle status "
+                    + "and candidate activity."
+                  )}
               </p>
             </div>
 
@@ -339,47 +508,57 @@ function CompanyAnalytics() {
 
           <div className="job-performance-list">
             {jobs.map((job) => {
-              const title =
+              const title = (
                 isJapanese && job.title_ja
                   ? job.title_ja
-                  : job.title_en;
+                  : job.title_en
+              );
 
-              const width =
-                (job.application_count /
-                  maximumJobApplications) *
-                100;
+              const applicationCount = (
+                job.application_count || 0
+              );
+
+              const width = (
+                applicationCount
+                / maximumJobApplications
+              ) * 100;
+
+              const lifecycleStatus = (
+                getEffectiveStatus(job)
+              );
 
               return (
                 <article
                   className="job-performance-item"
                   key={job.id}
                 >
-                  <div className="job-performance-information">
+                  <div
+                    className={
+                      "job-performance-information"
+                    }
+                  >
                     <div>
                       <h3>{title}</h3>
 
                       <span
                         className={
-                          job.is_active
-                            ? "status-badge"
-                            : "status-badge inactive"
+                          `job-lifecycle-badge `
+                          + lifecycleStatus
                         }
                       >
-                        {job.is_active
-                          ? isJapanese
-                            ? "公開中"
-                            : "Active"
-                          : isJapanese
-                            ? "非公開"
-                            : "Inactive"}
+                        {
+                          getLifecycleLabel(
+                            lifecycleStatus,
+                          )
+                        }
                       </span>
                     </div>
 
                     <strong>
-                      {job.application_count}{" "}
+                      {applicationCount}{" "}
                       {isJapanese
                         ? "件"
-                        : job.application_count === 1
+                        : applicationCount === 1
                           ? "application"
                           : "applications"}
                     </strong>
@@ -400,8 +579,14 @@ function CompanyAnalytics() {
           {!jobs.length && (
             <p className="empty-message">
               {isJapanese
-                ? "投稿した求人はまだありません。"
-                : "You have not posted any jobs yet."}
+                ? (
+                  "作成した求人は"
+                  + "まだありません。"
+                )
+                : (
+                  "You have not created "
+                  + "any jobs yet."
+                )}
             </p>
           )}
         </section>
