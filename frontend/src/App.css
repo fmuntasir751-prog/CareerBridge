@@ -4481,3 +4481,38 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+/* Reduce the large gap before How It Works */
+.home-how {
+  padding-top: 72px;
+  margin-top: 0;
+}
+
+.home-hero + .home-how {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .home-how {
+    padding-top: 44px;
+  }
+}
+/* Fix excessive space between hero and How It Works */
+.hero {
+  min-height: auto;
+  padding-bottom: 72px;
+}
+
+.home-how {
+  margin-top: 0;
+  padding-top: 72px;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding-bottom: 48px;
+  }
+
+  .home-how {
+    padding-top: 48px;
+  }
+}
