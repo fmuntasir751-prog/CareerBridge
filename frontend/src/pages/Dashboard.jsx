@@ -254,6 +254,30 @@ function Dashboard() {
           </div>
         </section>
 
+        <section className="dashboard-overview-strip" aria-label={isJapanese ? "概要" : "Overview"}>
+          <article>
+            <span className="overview-icon">01</span>
+            <div>
+              <small>{isJapanese ? "アカウント" : "Account"}</small>
+              <strong>{roleLabel}</strong>
+            </div>
+          </article>
+          <article>
+            <span className="overview-icon">02</span>
+            <div>
+              <small>{isJapanese ? "使用言語" : "Language"}</small>
+              <strong>{languageLabel}</strong>
+            </div>
+          </article>
+          <article>
+            <span className="overview-icon">03</span>
+            <div>
+              <small>{isJapanese ? "未読通知" : "Unread alerts"}</small>
+              <strong>{isStudent ? unreadCount : "—"}</strong>
+            </div>
+          </article>
+        </section>
+
         <div className="dashboard-action-grid">
           {dashboardActions.map((action) => (
             <Link

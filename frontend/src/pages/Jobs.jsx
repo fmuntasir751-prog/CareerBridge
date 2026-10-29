@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
-import api from "../services/api";
+import api, { getApiErrorMessage } from "../services/api";
 
 const initialFilters = {
   search: "",
@@ -25,24 +26,35 @@ function Jobs() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   const isJapanese =
     i18n.language.startsWith("ja");
 
   useEffect(() => {
     const loadJobs = async () => {
+      setLoading(true);
+      setError("");
+
       try {
-        const response = await api.get("/jobs/");
+        const response = await api.get("/jobs/", {
+          timeout: 20000,
+        });
         setJobs(response.data);
-      } catch {
-        setError(t("jobsLoadError"));
+      } catch (requestError) {
+        setError(
+          getApiErrorMessage(
+            requestError,
+            t("jobsLoadError"),
+          ),
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadJobs();
-  }, [t]);
+  }, [retryCount, t]);
 
   const locations = useMemo(() => {
     return [
@@ -251,26 +263,40 @@ function Jobs() {
 
   if (loading) {
     return (
-      <div className="page-loading">
-        {t("loading")}
-      </div>
+      <main className="jobs-page">
+        <header className="dashboard-header jobs-public-header">
+          <Link to="/" className="auth-brand"><span>CB</span>CareerBridge</Link>
+          <Link className="back-link" to="/">← {t("backHome")}</Link>
+        </header>
+        <section className="jobs-content jobs-loading-content" aria-busy="true" aria-label={t("loading")}>
+          <div className="jobs-title-skeleton skeleton-block" />
+          <div className="filters-skeleton skeleton-block" />
+          <div className="jobs-grid">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <article className="job-card job-card-skeleton" key={item}>
+                <span className="skeleton-line short" /><span className="skeleton-line title" /><span className="skeleton-line" /><span className="skeleton-line" /><span className="skeleton-line button" />
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
     );
   }
 
   return (
     <main className="jobs-page">
       <header className="dashboard-header">
-        <a href="/" className="auth-brand">
+        <Link to="/" className="auth-brand">
           <span>CB</span>
           CareerBridge
-        </a>
+        </Link>
 
-        <a
+        <Link
           className="back-link"
-          href="/dashboard"
+          to={localStorage.getItem("careerbridge-access") ? "/dashboard" : "/"}
         >
-          ← {t("dashboard")}
-        </a>
+          ← {localStorage.getItem("careerbridge-access") ? t("dashboard") : t("backHome")}
+        </Link>
       </header>
 
       <section className="jobs-content">
@@ -557,8 +583,12 @@ function Jobs() {
         )}
 
         {error && (
-          <div className="form-message error">
-            {error}
+          <div className="jobs-error-state" role="alert">
+            <span aria-hidden="true">!</span>
+            <div><h2>{isJapanese ? "求人を読み込めませんでした" : "We couldn't load the jobs"}</h2><p>{error}</p></div>
+            <button type="button" onClick={() => setRetryCount((count) => count + 1)}>
+              {isJapanese ? "もう一度試す" : "Try again"}
+            </button>
           </div>
         )}
 
@@ -613,19 +643,19 @@ function Jobs() {
                 <p>{description}</p>
 
                 <div className="job-meta">
-                  <span>
-                    📍 {job.location}
+                  <span className="job-meta-item">
+                    <i aria-hidden="true">LOC</i> {job.location}
                   </span>
 
-                  <span>
-                    💼{" "}
+                  <span className="job-meta-item">
+                    <i aria-hidden="true">JOB</i>{" "}
                     {getEmploymentLabel(
                       job.employment_type,
                     )}
                   </span>
 
-                  <span>
-                    🗣️{" "}
+                  <span className="job-meta-item">
+                    <i aria-hidden="true">JP</i>{" "}
                     {getJapaneseLabel(
                       job.japanese_level,
                     )}
@@ -638,12 +668,12 @@ function Jobs() {
                   {formatSalary(job.salary_max)}
                 </div>
 
-                <a
+                <Link
                   className="primary-button"
-                  href={`/jobs/${job.id}`}
+                  to={`/jobs/${job.id}`}
                 >
                   {t("viewDetails")}
-                </a>
+                </Link>
               </article>
             );
           })}
