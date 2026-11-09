@@ -1,0 +1,7 @@
+case_id,label,expected_fit,skills_only,weighted_score,title_score,location_score,workplace_score,japanese_score,salary_score
+J1,Ideal frontend job,100,100,100,15,15,10,10,10
+J2,Backend role with frontend keywords,25,82,33,0,0,0,0,0
+J3,Frontend role in another location,75,100,75,15,0,0,10,10
+J4,Japanese-only matching title,90,100,100,15,15,10,10,10
+J5,Skill match but requirements mismatch,50,100,70,15,15,0,0,0
+J6,Missing job location,70,100,85,15,0,10,10,10

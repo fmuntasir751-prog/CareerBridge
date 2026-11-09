@@ -53,6 +53,24 @@ def contains_term(text, term):
     return re.search(pattern, text) is not None
 
 
+def tokenize_title(value):
+    normalized_value = normalize_text(value)
+
+    return [
+        token
+        for token in re.findall(
+            (
+                r"[a-z0-9+#.]+"
+                r"|[一-龯々]+"
+                r"|[ぁ-ん]+"
+                r"|[ァ-ヶー]+"
+            ),
+            normalized_value,
+        )
+        if len(token) > 1
+    ]
+
+
 def canonicalize_profile_skills(skills_text):
     raw_skills = [
         normalize_text(skill)
@@ -97,7 +115,10 @@ def extract_job_skills(job):
 
     for canonical_name, aliases in SKILL_ALIASES.items():
         if any(
-            contains_term(job_text, normalize_text(alias))
+            contains_term(
+                job_text,
+                normalize_text(alias),
+            )
             for alias in aliases
         ):
             required_skills.add(canonical_name)
@@ -117,29 +138,68 @@ def calculate_title_score(profile, job):
         f"{job.title_en} {job.title_ja}",
     )
 
-    desired_words = {
-        word
-        for word in re.findall(
-            r"[a-zA-Z0-9+#.]+",
-            desired_title,
-        )
-        if len(word) > 2
-    }
+    if desired_title in job_title:
+        return 15
 
-    job_words = set(
-        re.findall(
-            r"[a-zA-Z0-9+#.]+",
-            job_title,
-        )
-    )
+    desired_words = tokenize_title(desired_title)
+    job_words = set(tokenize_title(job_title))
 
     if not desired_words:
         return 0
 
-    matched_words = desired_words & job_words
+    matched_words = [
+        word
+        for word in desired_words
+        if (
+            word in job_words
+            or (
+                re.search(
+                    r"[^a-z0-9+#.]",
+                    word,
+                )
+                and word in job_title
+            )
+        )
+    ]
 
     return round(
-        len(matched_words) / len(desired_words) * 15
+        len(set(matched_words))
+        / len(set(desired_words))
+        * 15
+    )
+
+
+def calculate_location_match(
+    profile_location,
+    job_location,
+):
+    normalized_profile = normalize_text(
+        profile_location,
+    )
+
+    normalized_job = normalize_text(
+        job_location,
+    )
+
+    if (
+        not normalized_profile
+        or not normalized_job
+    ):
+        return False
+
+    profile_primary = (
+        normalized_profile
+        .split(",")[0]
+        .strip()
+    )
+
+    return bool(
+        normalized_profile in normalized_job
+        or normalized_job in normalized_profile
+        or (
+            profile_primary
+            and profile_primary in normalized_job
+        )
     )
 
 
@@ -172,20 +232,14 @@ def calculate_job_match(profile, job):
         job,
     )
 
-    profile_location = normalize_text(profile.location)
-    job_location = normalize_text(job.location)
-
-    location_match = bool(
-        profile_location
-        and (
-            profile_location in job_location
-            or job_location in profile_location
-            or profile_location.split(",")[0]
-            in job_location
-        )
+    location_match = calculate_location_match(
+        profile.location,
+        job.location,
     )
 
-    location_score = 15 if location_match else 0
+    location_score = (
+        15 if location_match else 0
+    )
 
     workplace_match = (
         profile.preferred_workplace == "any"
@@ -193,16 +247,22 @@ def calculate_job_match(profile, job):
         == job.workplace_type
     )
 
-    workplace_score = 10 if workplace_match else 0
-
-    student_japanese_rank = JAPANESE_LEVEL_RANK.get(
-        profile.japanese_level,
-        0,
+    workplace_score = (
+        10 if workplace_match else 0
     )
 
-    required_japanese_rank = JAPANESE_LEVEL_RANK.get(
-        job.japanese_level,
-        0,
+    student_japanese_rank = (
+        JAPANESE_LEVEL_RANK.get(
+            profile.japanese_level,
+            0,
+        )
+    )
+
+    required_japanese_rank = (
+        JAPANESE_LEVEL_RANK.get(
+            job.japanese_level,
+            0,
+        )
     )
 
     japanese_match = (
@@ -210,21 +270,31 @@ def calculate_job_match(profile, job):
         >= required_japanese_rank
     )
 
-    japanese_score = 10 if japanese_match else 0
+    japanese_score = (
+        10 if japanese_match else 0
+    )
 
-    desired_salary = profile.desired_salary_min
+    desired_salary = (
+        profile.desired_salary_min
+    )
 
     if not desired_salary:
         salary_match = None
         salary_score = 0
+
     elif job.salary_max is None:
         salary_match = None
         salary_score = 5
+
     else:
         salary_match = (
-            job.salary_max >= desired_salary
+            job.salary_max
+            >= desired_salary
         )
-        salary_score = 10 if salary_match else 0
+
+        salary_score = (
+            10 if salary_match else 0
+        )
 
     total_score = min(
         100,
@@ -238,39 +308,56 @@ def calculate_job_match(profile, job):
 
     if total_score >= 80:
         readiness = "excellent"
+
     elif total_score >= 65:
         readiness = "good"
+
     elif total_score >= 45:
         readiness = "developing"
+
     else:
         readiness = "low"
 
     recommendations = []
 
     if missing_skills:
-        recommendations.append("improve_missing_skills")
+        recommendations.append(
+            "improve_missing_skills"
+        )
 
     if not location_match:
-        recommendations.append("review_location")
+        recommendations.append(
+            "review_location"
+        )
 
     if not workplace_match:
-        recommendations.append("review_workplace")
+        recommendations.append(
+            "review_workplace"
+        )
 
     if not japanese_match:
-        recommendations.append("improve_japanese")
+        recommendations.append(
+            "improve_japanese"
+        )
 
     if salary_match is False:
-        recommendations.append("review_salary")
+        recommendations.append(
+            "review_salary"
+        )
 
     if not profile.resume:
-        recommendations.append("upload_resume")
+        recommendations.append(
+            "upload_resume"
+        )
 
     return {
         "match_score": total_score,
         "readiness": readiness,
         "matching_skills": matching_skills,
         "missing_skills": missing_skills,
-        "required_skills": sorted(required_skills),
+        "required_skills": sorted(
+            required_skills,
+        ),
         "matches": {
             "location": location_match,
             "workplace": workplace_match,

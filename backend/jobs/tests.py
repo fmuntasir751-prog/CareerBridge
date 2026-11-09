@@ -12,7 +12,7 @@ from profiles.models import (
 )
 
 from .models import Job, SavedJob
-
+from .matching import calculate_job_match
 
 User = get_user_model()
 
@@ -288,7 +288,66 @@ class JobAPITestCase(APITestCase):
             "React",
             response.data["matching_skills"],
         )
+    def test_japanese_job_title_receives_title_score(
+        self,
+    ):
+        self.student_profile.desired_job_title = (
+            "フロントエンドエンジニア"
+        )
 
+        result = calculate_job_match(
+            self.student_profile,
+            self.strong_job,
+        )
+
+        self.assertEqual(
+            result[
+                "score_breakdown"
+            ]["job_title"],
+            15,
+        )
+
+    def test_empty_profile_location_does_not_match(
+        self,
+    ):
+        self.student_profile.location = ""
+
+        result = calculate_job_match(
+            self.student_profile,
+            self.strong_job,
+        )
+
+        self.assertFalse(
+            result["matches"]["location"],
+        )
+
+        self.assertEqual(
+            result[
+                "score_breakdown"
+            ]["location"],
+            0,
+        )
+
+    def test_empty_job_location_does_not_match(
+        self,
+    ):
+        self.strong_job.location = ""
+
+        result = calculate_job_match(
+            self.student_profile,
+            self.strong_job,
+        )
+
+        self.assertFalse(
+            result["matches"]["location"],
+        )
+
+        self.assertEqual(
+            result[
+                "score_breakdown"
+            ]["location"],
+            0,
+        )
     def test_company_cannot_view_match_analysis(
         self,
     ):

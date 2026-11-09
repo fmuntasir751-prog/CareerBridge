@@ -1,0 +1,97 @@
+{
+  "profile": {
+    "skills": "React, JavaScript, HTML, CSS, Git",
+    "desired_job_title": "フロントエンドエンジニア",
+    "location": "Osaka, Japan",
+    "preferred_workplace": "hybrid",
+    "japanese_level": "n2",
+    "desired_salary_min": 250000,
+    "resume": null
+  },
+  "jobs": [
+    {
+      "case_id": "J1",
+      "label": "Ideal frontend job",
+      "expected_fit": 100,
+      "title_en": "Frontend Developer",
+      "title_ja": "フロントエンドエンジニア",
+      "description_en": "Build accessible React interfaces.",
+      "description_ja": "Reactを使用して画面を開発します。",
+      "requirements": "React, JavaScript, HTML, CSS, Git",
+      "location": "Osaka, Japan",
+      "workplace_type": "hybrid",
+      "japanese_level": "n2",
+      "salary_max": 350000
+    },
+    {
+      "case_id": "J2",
+      "label": "Backend role with frontend keywords",
+      "expected_fit": 25,
+      "title_en": "Backend Developer",
+      "title_ja": "バックエンドエンジニア",
+      "description_en": "Work with a React team and maintain API services.",
+      "description_ja": "APIサービスを開発します。",
+      "requirements": "React, JavaScript, HTML, CSS, Git",
+      "location": "Tokyo, Japan",
+      "workplace_type": "onsite",
+      "japanese_level": "n1",
+      "salary_max": 240000
+    },
+    {
+      "case_id": "J3",
+      "label": "Frontend role in another location",
+      "expected_fit": 75,
+      "title_en": "Frontend Developer",
+      "title_ja": "フロントエンドエンジニア",
+      "description_en": "Develop web interfaces.",
+      "description_ja": "Web画面を開発します。",
+      "requirements": "React, JavaScript, HTML, CSS",
+      "location": "Tokyo, Japan",
+      "workplace_type": "remote",
+      "japanese_level": "n2",
+      "salary_max": 350000
+    },
+    {
+      "case_id": "J4",
+      "label": "Japanese-only matching title",
+      "expected_fit": 90,
+      "title_en": "Web Engineer",
+      "title_ja": "フロントエンドエンジニア",
+      "description_en": "Build client-side applications.",
+      "description_ja": "クライアント側のアプリを開発します。",
+      "requirements": "React, JavaScript, HTML, CSS, Git",
+      "location": "Osaka",
+      "workplace_type": "hybrid",
+      "japanese_level": "n2",
+      "salary_max": 320000
+    },
+    {
+      "case_id": "J5",
+      "label": "Skill match but requirements mismatch",
+      "expected_fit": 50,
+      "title_en": "Frontend Developer",
+      "title_ja": "フロントエンドエンジニア",
+      "description_en": "Build React applications.",
+      "description_ja": "Reactアプリを開発します。",
+      "requirements": "React, JavaScript, HTML, CSS, Git",
+      "location": "Osaka, Japan",
+      "workplace_type": "onsite",
+      "japanese_level": "n1",
+      "salary_max": 220000
+    },
+    {
+      "case_id": "J6",
+      "label": "Missing job location",
+      "expected_fit": 70,
+      "title_en": "Frontend Developer",
+      "title_ja": "フロントエンドエンジニア",
+      "description_en": "Build React applications.",
+      "description_ja": "Reactアプリを開発します。",
+      "requirements": "React, JavaScript, HTML, CSS, Git",
+      "location": "",
+      "workplace_type": "hybrid",
+      "japanese_level": "n2",
+      "salary_max": 350000
+    }
+  ]
+}
