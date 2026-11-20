@@ -20,6 +20,10 @@ class StudentProfileSerializer(
         read_only=True,
     )
 
+    profile_completion = serializers.SerializerMethodField()
+    matching_ready = serializers.SerializerMethodField()
+    missing_matching_fields = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentProfile
 
@@ -39,13 +43,86 @@ class StudentProfileSerializer(
             "desired_salary_min",
             "profile_image",
             "resume",
+            "profile_completion",
+            "matching_ready",
+            "missing_matching_fields",
         )
 
         read_only_fields = (
             "id",
             "username",
             "email",
+            "profile_completion",
+            "matching_ready",
+            "missing_matching_fields",
         )
+
+    def get_completion_checks(self, obj):
+        return {
+            "headline": bool(obj.headline.strip()),
+            "bio": bool(obj.bio.strip()),
+            "skills": bool(obj.skills.strip()),
+            "university": bool(obj.university.strip()),
+            "graduation_year": (
+                obj.graduation_year is not None
+            ),
+            "location": bool(obj.location.strip()),
+            "desired_job_title": bool(
+                obj.desired_job_title.strip()
+            ),
+            "preferred_workplace": (
+                obj.preferred_workplace
+                != StudentProfile.WorkplacePreference.ANY
+            ),
+            "japanese_level": (
+                obj.japanese_level
+                != StudentProfile.JapaneseLevel.NOT_REQUIRED
+            ),
+            "desired_salary_min": (
+                obj.desired_salary_min is not None
+            ),
+            "resume": bool(obj.resume),
+        }
+
+    def get_profile_completion(self, obj):
+        checks = self.get_completion_checks(obj)
+
+        completed = sum(checks.values())
+        total = len(checks)
+
+        return round(
+            completed / total * 100
+        )
+
+    def get_missing_matching_fields(self, obj):
+        required_fields = {
+            "skills": bool(obj.skills.strip()),
+            "location": bool(obj.location.strip()),
+            "desired_job_title": bool(
+                obj.desired_job_title.strip()
+            ),
+            "preferred_workplace": (
+                obj.preferred_workplace
+                != StudentProfile.WorkplacePreference.ANY
+            ),
+            "japanese_level": (
+                obj.japanese_level
+                != StudentProfile.JapaneseLevel.NOT_REQUIRED
+            ),
+            "desired_salary_min": (
+                obj.desired_salary_min is not None
+            ),
+        }
+
+        return [
+            field_name
+            for field_name, completed
+            in required_fields.items()
+            if not completed
+        ]
+
+    def get_matching_ready(self, obj):
+        return not self.get_missing_matching_fields(obj)
 
 
 class CompanyProfileSerializer(

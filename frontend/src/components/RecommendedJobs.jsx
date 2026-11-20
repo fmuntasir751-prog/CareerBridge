@@ -4,6 +4,50 @@ import { useNavigate } from "react-router-dom";
 
 import api from "../services/api";
 
+function MetaIcon({ name }) {
+  const paths = {
+    location: (
+      <>
+        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    workplace: (
+      <>
+        <rect
+          x="3"
+          y="7"
+          width="18"
+          height="13"
+          rx="2"
+        />
+        <path d="M8 7V4h8v3M3 12h18" />
+      </>
+    ),
+    salary: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8 7 4 5 4-5M8 14h8M8 17h8" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 function RecommendedJobs() {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
@@ -17,6 +61,9 @@ function RecommendedJobs() {
 
   useEffect(() => {
     const loadRecommendedJobs = async () => {
+      setLoading(true);
+      setError("");
+
       try {
         const response = await api.get(
           "/jobs/recommended/",
@@ -44,7 +91,7 @@ function RecommendedJobs() {
 
     if (job.salary_min && job.salary_max) {
       return (
-        `¥${formatter.format(job.salary_min)} - ` +
+        `¥${formatter.format(job.salary_min)} – ` +
         `¥${formatter.format(job.salary_max)}`
       );
     }
@@ -66,14 +113,43 @@ function RecommendedJobs() {
       : "Salary not specified";
   };
 
+  const getReadinessLabel = (readiness) => {
+    const labels = {
+      excellent: isJapanese
+        ? "非常に高い適合度"
+        : "Excellent match",
+      good: isJapanese
+        ? "高い適合度"
+        : "Good match",
+      developing: isJapanese
+        ? "改善可能"
+        : "Developing match",
+      low: isJapanese
+        ? "適合度が低い"
+        : "Low match",
+    };
+
+    return labels[readiness] || labels.low;
+  };
+
   if (loading) {
     return (
-      <section className="recommended-jobs-section">
-        <p>
-          {isJapanese
-            ? "おすすめ求人を分析しています..."
-            : "Analyzing recommended jobs..."}
-        </p>
+      <section
+        className="recommended-jobs-section"
+        aria-live="polite"
+      >
+        <div className="recommended-loading">
+          <span
+            className="recommended-loading-spinner"
+            aria-hidden="true"
+          />
+
+          <p>
+            {isJapanese
+              ? "プロフィールと求人を分析しています..."
+              : "Analyzing your profile and available jobs..."}
+          </p>
+        </div>
       </section>
     );
   }
@@ -81,9 +157,18 @@ function RecommendedJobs() {
   if (error) {
     return (
       <section className="recommended-jobs-section">
-        <p className="recommended-jobs-error">
-          {error}
-        </p>
+        <div
+          className="recommended-jobs-error"
+          role="alert"
+        >
+          <strong>
+            {isJapanese
+              ? "求人を読み込めませんでした"
+              : "Recommendations unavailable"}
+          </strong>
+
+          <p>{error}</p>
+        </div>
       </section>
     );
   }
@@ -107,11 +192,29 @@ function RecommendedJobs() {
           </div>
         </div>
 
-        <p>
-          {isJapanese
-            ? "現在おすすめできる求人がありません。"
-            : "There are no active recommendations yet."}
-        </p>
+        <div className="recommended-empty-state">
+          <strong>
+            {isJapanese
+              ? "現在おすすめできる求人がありません"
+              : "No recommendations yet"}
+          </strong>
+
+          <p>
+            {isJapanese
+              ? "新しい求人が公開されると、プロフィールに基づいて表示されます。"
+              : "New jobs will appear here when they match your profile."}
+          </p>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => navigate("/jobs")}
+          >
+            {isJapanese
+              ? "すべての求人を見る"
+              : "Browse all jobs"}
+          </button>
+        </div>
       </section>
     );
   }
@@ -134,8 +237,8 @@ function RecommendedJobs() {
 
           <p>
             {isJapanese
-              ? "プロフィール、スキル、希望条件に基づいています。"
-              : "Based on your profile, skills and preferences."}
+              ? "スキル、希望職種、勤務地、勤務形態、日本語レベル、給与条件に基づいています。"
+              : "Based on your skills, career goal, location, workplace, Japanese level and salary preference."}
           </p>
         </div>
 
@@ -155,6 +258,12 @@ function RecommendedJobs() {
           const analysis =
             job.match_analysis || {};
 
+          const score =
+            analysis.match_score || 0;
+
+          const readiness =
+            analysis.readiness || "low";
+
           const title =
             isJapanese && job.title_ja
               ? job.title_ja
@@ -162,26 +271,48 @@ function RecommendedJobs() {
 
           return (
             <article
-              className="recommended-job-card"
+              className={
+                `recommended-job-card match-${readiness}`
+              }
               key={job.id}
             >
               <div className="recommended-job-top">
                 <span className="recommendation-rank">
-                  #{index + 1}
+                  {isJapanese
+                    ? `おすすめ ${index + 1}`
+                    : `#${index + 1} recommendation`}
                 </span>
 
-                <div className="recommendation-score">
-                  <strong>
-                    {analysis.match_score || 0}%
-                  </strong>
-
-                  <small>
-                    {isJapanese
-                      ? "マッチ"
-                      : "Match"}
-                  </small>
+                <div
+                  className="recommendation-score"
+                  role="img"
+                  aria-label={
+                    isJapanese
+                      ? `マッチ度 ${score}パーセント`
+                      : `${score} percent match`
+                  }
+                  style={{
+                    "--match-score": `${score * 3.6}deg`,
+                  }}
+                >
+                  <div>
+                    <strong>{score}%</strong>
+                    <small>
+                      {isJapanese
+                        ? "マッチ"
+                        : "Match"}
+                    </small>
+                  </div>
                 </div>
               </div>
+
+              <span
+                className={
+                  `match-readiness-badge ${readiness}`
+                }
+              >
+                {getReadinessLabel(readiness)}
+              </span>
 
               <h3>{title}</h3>
 
@@ -190,22 +321,65 @@ function RecommendedJobs() {
               </p>
 
               <div className="recommended-job-meta">
-                <span>📍 {job.location}</span>
-                <span>🏢 {job.workplace_type}</span>
-                <span>💴 {formatSalary(job)}</span>
+                <span>
+                  <MetaIcon name="location" />
+                  {job.location}
+                </span>
+
+                <span>
+                  <MetaIcon name="workplace" />
+                  {job.workplace_type}
+                </span>
+
+                <span>
+                  <MetaIcon name="salary" />
+                  {formatSalary(job)}
+                </span>
               </div>
 
-              {analysis.matching_skills?.length >
+              <div className="recommended-match-summary">
+                <strong>
+                  {isJapanese
+                    ? "一致したスキル"
+                    : "Matched skills"}
+                </strong>
+
+                {analysis.matching_skills?.length >
+                0 ? (
+                  <div className="recommended-skill-list">
+                    {analysis.matching_skills
+                      .slice(0, 3)
+                      .map((skill) => (
+                        <span key={skill}>
+                          <span aria-hidden="true">
+                            ✓
+                          </span>
+                          {skill}
+                        </span>
+                      ))}
+                  </div>
+                ) : (
+                  <small>
+                    {isJapanese
+                      ? "スキルの一致はまだありません。"
+                      : "No exact skill matches yet."}
+                  </small>
+                )}
+              </div>
+
+              {analysis.missing_skills?.length >
                 0 && (
-                <div className="recommended-skill-list">
-                  {analysis.matching_skills
-                    .slice(0, 3)
-                    .map((skill) => (
-                      <span key={skill}>
-                        ✓ {skill}
-                      </span>
-                    ))}
-                </div>
+                <p className="recommended-improvement">
+                  <strong>
+                    {isJapanese
+                      ? "改善候補："
+                      : "Improve: "}
+                  </strong>
+
+                  {analysis.missing_skills
+                    .slice(0, 2)
+                    .join(", ")}
+                </p>
               )}
 
               <button
@@ -218,6 +392,7 @@ function RecommendedJobs() {
                 {isJapanese
                   ? "詳細と分析を見る"
                   : "View details and analysis"}
+                <span aria-hidden="true">→</span>
               </button>
             </article>
           );
