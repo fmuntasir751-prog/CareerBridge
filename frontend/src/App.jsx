@@ -1,156 +1,253 @@
 import "./App.css";
 
-import { Route, Routes } from "react-router-dom";
+import {
+  lazy,
+  Suspense,
+} from "react";
+import {
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RoleRoute from "./components/RoleRoute.jsx";
 import SiteFooter from "./components/SiteFooter.jsx";
 
-import Applications from "./pages/Applications.jsx";
-import ApplyJob from "./pages/ApplyJob.jsx";
-import CompanyAnalytics from "./pages/CompanyAnalytics.jsx";
-import CompanyProfile from "./pages/CompanyProfile.jsx";
-import CreateJob from "./pages/CreateJob.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import EditJob from "./pages/EditJob.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import Home from "./pages/Home.jsx";
-import JobDetail from "./pages/JobDetail.jsx";
-import Jobs from "./pages/Jobs.jsx";
-import Login from "./pages/Login.jsx";
-import MyJobs from "./pages/MyJobs.jsx";
-import NotFound from "./pages/NotFound.jsx";
-import Notifications from "./pages/Notifications.jsx";
-import Register from "./pages/Register.jsx";
-import SavedJobs from "./pages/SavedJobs.jsx";
-import StudentProfile from "./pages/StudentProfile.jsx";
-import StudentProgress from "./pages/StudentProgress.jsx";
-import VerifyEmail from "./pages/VerifyEmail.jsx";
+const Home = lazy(
+  () => import("./pages/Home.jsx"),
+);
+
+const Register = lazy(
+  () => import("./pages/Register.jsx"),
+);
+
+const Login = lazy(
+  () => import("./pages/Login.jsx"),
+);
+
+const VerifyEmail = lazy(
+  () => import("./pages/VerifyEmail.jsx"),
+);
+
+const ForgotPassword = lazy(
+  () => import("./pages/ForgotPassword.jsx"),
+);
+
+const Jobs = lazy(
+  () => import("./pages/Jobs.jsx"),
+);
+
+const JobDetail = lazy(
+  () => import("./pages/JobDetail.jsx"),
+);
+
+const Dashboard = lazy(
+  () => import("./pages/Dashboard.jsx"),
+);
+
+const Applications = lazy(
+  () => import("./pages/Applications.jsx"),
+);
+
+const Notifications = lazy(
+  () => import("./pages/Notifications.jsx"),
+);
+
+const StudentProfile = lazy(
+  () => import("./pages/StudentProfile.jsx"),
+);
+
+const SavedJobs = lazy(
+  () => import("./pages/SavedJobs.jsx"),
+);
+
+const ApplyJob = lazy(
+  () => import("./pages/ApplyJob.jsx"),
+);
+
+const StudentProgress = lazy(
+  () => import("./pages/StudentProgress.jsx"),
+);
+
+const CompanyProfile = lazy(
+  () => import("./pages/CompanyProfile.jsx"),
+);
+
+const CreateJob = lazy(
+  () => import("./pages/CreateJob.jsx"),
+);
+
+const MyJobs = lazy(
+  () => import("./pages/MyJobs.jsx"),
+);
+
+const EditJob = lazy(
+  () => import("./pages/EditJob.jsx"),
+);
+
+const CompanyAnalytics = lazy(
+  () => import("./pages/CompanyAnalytics.jsx"),
+);
+
+const NotFound = lazy(
+  () => import("./pages/NotFound.jsx"),
+);
+
+function PageLoadingFallback() {
+  return (
+    <div
+      className="route-loading"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading page"
+    >
+      <span
+        className="route-loading-spinner"
+        aria-hidden="true"
+      />
+
+      <p>Loading CareerBridge...</p>
+    </div>
+  );
+}
 
 function App() {
   return (
     <div className="app-shell">
       <div className="app-content">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Home />} />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/verify-email"
-            element={<VerifyEmail />}
-          />
-
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
-
-          <Route
-            path="/jobs"
-            element={<Jobs />}
-          />
-
-          <Route
-            path="/jobs/:id"
-            element={<JobDetail />}
-          />
-
-          {/* All authenticated users */}
-          <Route element={<ProtectedRoute />}>
+        <Suspense
+          fallback={<PageLoadingFallback />}
+        >
+          <Routes>
+            {/* Public routes */}
             <Route
-              path="/dashboard"
-              element={<Dashboard />}
+              path="/"
+              element={<Home />}
             />
 
             <Route
-              path="/applications"
-              element={<Applications />}
+              path="/register"
+              element={<Register />}
             />
 
             <Route
-              path="/notifications"
-              element={<Notifications />}
+              path="/login"
+              element={<Login />}
             />
 
-            {/* Student-only routes */}
             <Route
-              element={
-                <RoleRoute
-                  allowedRoles={["student"]}
+              path="/verify-email"
+              element={<VerifyEmail />}
+            />
+
+            <Route
+              path="/forgot-password"
+              element={<ForgotPassword />}
+            />
+
+            <Route
+              path="/jobs"
+              element={<Jobs />}
+            />
+
+            <Route
+              path="/jobs/:id"
+              element={<JobDetail />}
+            />
+
+            {/* All authenticated users */}
+            <Route element={<ProtectedRoute />}>
+              <Route
+                path="/dashboard"
+                element={<Dashboard />}
+              />
+
+              <Route
+                path="/applications"
+                element={<Applications />}
+              />
+
+              <Route
+                path="/notifications"
+                element={<Notifications />}
+              />
+
+              {/* Student-only routes */}
+              <Route
+                element={
+                  <RoleRoute
+                    allowedRoles={[
+                      "student",
+                    ]}
+                  />
+                }
+              >
+                <Route
+                  path="/profile"
+                  element={<StudentProfile />}
                 />
-              }
-            >
-              <Route
-                path="/profile"
-                element={<StudentProfile />}
-              />
 
-              <Route
-                path="/saved-jobs"
-                element={<SavedJobs />}
-              />
+                <Route
+                  path="/saved-jobs"
+                  element={<SavedJobs />}
+                />
 
-              <Route
-                path="/jobs/:id/apply"
-                element={<ApplyJob />}
-              />
+                <Route
+                  path="/jobs/:id/apply"
+                  element={<ApplyJob />}
+                />
 
+                <Route
+                  path="/student-progress"
+                  element={<StudentProgress />}
+                />
+              </Route>
+
+              {/* Company-only routes */}
               <Route
-                path="/student-progress"
-                element={<StudentProgress />}
-              />
+                element={
+                  <RoleRoute
+                    allowedRoles={[
+                      "company",
+                    ]}
+                  />
+                }
+              >
+                <Route
+                  path="/company-profile"
+                  element={<CompanyProfile />}
+                />
+
+                <Route
+                  path="/jobs/new"
+                  element={<CreateJob />}
+                />
+
+                <Route
+                  path="/my-jobs"
+                  element={<MyJobs />}
+                />
+
+                <Route
+                  path="/jobs/:id/edit"
+                  element={<EditJob />}
+                />
+
+                <Route
+                  path="/company-analytics"
+                  element={
+                    <CompanyAnalytics />
+                  }
+                />
+              </Route>
             </Route>
 
-            {/* Company-only routes */}
             <Route
-              element={
-                <RoleRoute
-                  allowedRoles={["company"]}
-                />
-              }
-            >
-              <Route
-                path="/company-profile"
-                element={<CompanyProfile />}
-              />
-
-              <Route
-                path="/jobs/new"
-                element={<CreateJob />}
-              />
-
-              <Route
-                path="/my-jobs"
-                element={<MyJobs />}
-              />
-
-              <Route
-                path="/jobs/:id/edit"
-                element={<EditJob />}
-              />
-
-              <Route
-                path="/company-analytics"
-                element={<CompanyAnalytics />}
-              />
-            </Route>
-          </Route>
-
-          <Route
-            path="*"
-            element={<NotFound />}
-          />
-        </Routes>
+              path="*"
+              element={<NotFound />}
+            />
+          </Routes>
+        </Suspense>
       </div>
 
       <SiteFooter />

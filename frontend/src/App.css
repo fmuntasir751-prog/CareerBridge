@@ -5364,3 +5364,39 @@ textarea:focus-visible {
   align-items: center;
   gap: 6px;
 }
+.route-loading {
+  display: grid;
+  min-height: 65vh;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 40px 20px;
+  color: #40536d;
+  text-align: center;
+}
+
+.route-loading p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.route-loading-spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #dce5f4;
+  border-top-color: #315bea;
+  border-radius: 50%;
+  animation: route-loading-spin 0.8s linear infinite;
+}
+
+@keyframes route-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-loading-spinner {
+    animation-duration: 1.8s;
+  }
+}
