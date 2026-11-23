@@ -323,7 +323,13 @@ function Dashboard() {
       ? "企業"
       : "Company";
 
-  const languageLabel =
+  // Language the page is shown in right now.
+  const languageLabel = isJapanese
+    ? "日本語"
+    : "English";
+
+  // Language saved in the account settings.
+  const preferredLanguageLabel =
     user.preferred_language === "ja"
       ? "日本語"
       : "English";
@@ -924,7 +930,7 @@ function Dashboard() {
               <small>
                 {t("preferredLanguage")}
               </small>
-              <strong>{languageLabel}</strong>
+              <strong>{preferredLanguageLabel}</strong>
             </article>
           </div>
         </section>
