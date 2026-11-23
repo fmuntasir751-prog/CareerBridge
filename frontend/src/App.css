@@ -7846,3 +7846,939 @@ line-clamp: 5;
     grid-template-columns: 1fr;
   }
 }
+/* ========================================
+   Professional Applications dashboard
+======================================== */
+
+.applications-dashboard {
+  min-height: 100vh;
+  padding-bottom: 80px;
+  background:
+    radial-gradient(
+      circle at 92% 7%,
+      rgba(77, 70, 229, 0.1),
+      transparent 29%
+    ),
+    #f6f8fc;
+  color: #102247;
+}
+
+.applications-dashboard
+  .applications-content {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding:
+    42px clamp(18px, 5vw, 65px)
+    70px;
+}
+
+.applications-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 30px;
+}
+
+.applications-heading h1 {
+  margin: 6px 0 9px;
+  color: #102247;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.08;
+}
+
+.applications-heading
+  > div
+  > p:last-child {
+  max-width: 680px;
+  margin: 0;
+  color: #5c6d85;
+  line-height: 1.65;
+}
+
+.applications-heading
+  .primary-button {
+  flex: 0 0 auto;
+  min-width: 150px;
+}
+
+/* Application summary */
+
+.application-summary-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin: 26px 0;
+}
+
+.application-summary-grid article {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #dce4f1;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(21, 43, 85, 0.06);
+}
+
+.application-summary-grid small {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.application-summary-grid strong {
+  color: #102247;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.application-summary-icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: #edf3ff;
+  color: #285eea;
+}
+
+.application-summary-icon svg {
+  width: 23px;
+  height: 23px;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.application-summary-icon.reviewing {
+  background: #fff5da;
+  color: #966500;
+}
+
+.application-summary-icon.interview {
+  background: #f0eaff;
+  color: #6a45d8;
+}
+
+.application-summary-icon.accepted {
+  background: #e5f8ed;
+  color: #158149;
+}
+
+/* Application filters */
+
+.application-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 30px 0 20px;
+}
+
+.application-toolbar > p {
+  margin: 0;
+  color: #65758d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.application-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.application-filters button {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 7px 12px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d5dfed;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #53647d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.application-filters button:hover {
+  border-color: #9eb8ec;
+  color: #2458dc;
+  transform: translateY(-1px);
+}
+
+.application-filters button.active {
+  border-color: #3264ed;
+  background: #3264ed;
+  color: #ffffff;
+  box-shadow:
+    0 8px 18px rgba(50, 100, 237, 0.2);
+}
+
+.application-filters button span {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  place-items: center;
+  border-radius: 999px;
+  background: #edf2f9;
+  color: #53647d;
+  font-size: 0.74rem;
+}
+
+.application-filters
+  button.active
+  span {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Application cards */
+
+.professional-application-list {
+  display: grid;
+  gap: 19px;
+}
+
+.professional-application-card {
+  padding: 26px;
+  border: 1px solid #dce4f1;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    0 14px 36px rgba(21, 43, 85, 0.06);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.professional-application-card:hover {
+  border-color: #b9cae8;
+  box-shadow:
+    0 20px 44px rgba(21, 43, 85, 0.1);
+  transform: translateY(-2px);
+}
+
+.application-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+.application-card-header h2 {
+  margin: 11px 0 5px;
+  color: #102247;
+  font-size: 1.35rem;
+  line-height: 1.35;
+}
+
+.application-card-header
+  > div:first-child
+  > p {
+  margin: 0;
+  color: #5c6d84;
+  font-weight: 650;
+}
+
+.application-date {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 4px;
+  text-align: right;
+}
+
+.application-date small {
+  color: #768399;
+  font-size: 0.75rem;
+}
+
+.application-date strong {
+  color: #314563;
+  font-size: 0.88rem;
+}
+
+/* Status badges */
+
+.professional-application-card
+  .status-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.professional-application-card
+  .status-pending {
+  border-color: #cdd9eb;
+  background: #f0f4fa;
+  color: #52657f;
+}
+
+.professional-application-card
+  .status-reviewing {
+  border-color: #ecd18b;
+  background: #fff7df;
+  color: #886000;
+}
+
+.professional-application-card
+  .status-interview {
+  border-color: #cfbdf4;
+  background: #f4efff;
+  color: #6844c4;
+}
+
+.professional-application-card
+  .status-accepted {
+  border-color: #9dddb8;
+  background: #e7f8ee;
+  color: #137744;
+}
+
+.professional-application-card
+  .status-rejected {
+  border-color: #efb8b2;
+  background: #fff0ee;
+  color: #ac382f;
+}
+
+.professional-application-card
+  .status-withdrawn {
+  border-color: #d5d9e0;
+  background: #f3f4f6;
+  color: #656d7a;
+}
+
+/* Student application timeline */
+
+.application-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  margin: 27px 0 24px;
+}
+
+.application-timeline::before {
+  position: absolute;
+  z-index: 0;
+  top: 15px;
+  right: 12.5%;
+  left: 12.5%;
+  height: 3px;
+  border-radius: 999px;
+  background: #dfe6f0;
+  content: "";
+}
+
+.application-timeline-step {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: #8290a5;
+  text-align: center;
+}
+
+.application-timeline-step > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 3px solid #dfe6f0;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.application-timeline-step small {
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.application-timeline-step.complete
+  > span {
+  border-color: #3970ed;
+  background: #3970ed;
+}
+
+.application-timeline-step.complete {
+  color: #315aaf;
+}
+
+.application-timeline-step.current
+  > span {
+  box-shadow:
+    0 0 0 5px rgba(57, 112, 237, 0.13);
+}
+
+.application-timeline.status-accepted
+  .application-timeline-step:last-child
+  > span {
+  border-color: #1d9b5a;
+  background: #1d9b5a;
+  box-shadow:
+    0 0 0 5px rgba(29, 155, 90, 0.13);
+}
+
+.application-timeline.status-rejected
+  .application-timeline-step:last-child
+  > span {
+  border-color: #d44c42;
+  background: #d44c42;
+  box-shadow:
+    0 0 0 5px rgba(212, 76, 66, 0.12);
+}
+
+.application-timeline.status-withdrawn
+  .application-timeline-step:last-child
+  > span {
+  border-color: #7d8795;
+  background: #7d8795;
+}
+
+/* Applicant profile */
+
+.applicant-profile-summary {
+  display: grid;
+  grid-template-columns:
+    auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #dce5f2;
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #f5f7fd
+    );
+}
+
+.applicant-avatar {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 15px;
+  background:
+    linear-gradient(
+      135deg,
+      #3267ee,
+      #5747e9
+    );
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.applicant-profile-summary small {
+  color: #718096;
+  font-size: 0.75rem;
+}
+
+.applicant-profile-summary h3 {
+  margin: 3px 0;
+  color: #172b4e;
+  font-size: 1rem;
+}
+
+.applicant-profile-summary a {
+  color: #3263da;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.compact-match-score {
+  display: grid;
+  min-width: 70px;
+  padding: 10px;
+  place-items: center;
+  border: 1px solid #b8caf0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.compact-match-score strong {
+  color: #285ee7;
+  font-size: 1.25rem;
+}
+
+.compact-match-score small {
+  color: #5f6f88;
+  font-weight: 700;
+}
+
+/* Match panel overrides */
+
+.professional-application-card
+  .applicant-match-panel {
+  margin: 0 0 20px;
+  padding: 21px;
+  border: 1px solid #d6e2f5;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      #f8fbff,
+      #f2f6ff
+    );
+}
+
+.applicant-match-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.applicant-match-heading h3 {
+  margin: 5px 0 3px;
+  color: #192e52;
+  font-size: 1.05rem;
+}
+
+.applicant-match-heading p {
+  margin: 0;
+  color: #66768e;
+  font-size: 0.82rem;
+}
+
+.match-panel-label {
+  color: #2e60db;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.applicant-match-score {
+  display: flex;
+  align-items: flex-start;
+  color: #285de6;
+}
+
+.applicant-match-score strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.applicant-match-score span {
+  font-weight: 800;
+}
+
+.professional-application-card
+  .match-progress {
+  height: 9px;
+  margin: 18px 0 21px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dfe7f5;
+}
+
+.professional-application-card
+  .match-progress
+  > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      #2864ed,
+      #5849e9
+    );
+}
+
+.professional-application-card
+  .match-skill-columns {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.professional-application-card
+  .match-skill-columns h4 {
+  margin: 0 0 10px;
+  color: #344761;
+  font-size: 0.82rem;
+}
+
+.professional-application-card
+  .match-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.professional-application-card
+  .match-skill {
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 750;
+}
+
+.professional-application-card
+  .match-skill.matched {
+  border: 1px solid #a6dfbc;
+  background: #e9f9ef;
+  color: #157844;
+}
+
+.professional-application-card
+  .match-skill.missing {
+  border: 1px solid #efc1b7;
+  background: #fff3f0;
+  color: #a84939;
+}
+
+.professional-application-card
+  .match-empty {
+  color: #77859a;
+  font-size: 0.78rem;
+}
+
+.professional-application-card
+  .match-breakdown {
+  margin-top: 18px;
+  border-top: 1px solid #dbe4f2;
+  padding-top: 15px;
+}
+
+.professional-application-card
+  .match-breakdown summary {
+  color: #305fc9;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.professional-application-card
+  .match-breakdown-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.professional-application-card
+  .match-breakdown-grid
+  > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #dce5f2;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.professional-application-card
+  .match-breakdown-grid span {
+  color: #65758d;
+  font-size: 0.75rem;
+}
+
+.professional-application-card
+  .match-breakdown-grid strong {
+  color: #203b69;
+}
+
+/* Cover letter */
+
+.professional-application-card
+  .application-cover-letter {
+  margin: 18px 0;
+  padding: 0;
+  border: 1px solid #e0e6f0;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+.professional-application-card
+  .application-cover-letter summary {
+  padding: 14px 16px;
+  color: #314762;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.professional-application-card
+  .application-cover-letter p {
+  margin: 0;
+  padding: 0 16px 16px;
+  color: #5c6d84;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+/* Application action area */
+
+.professional-application-actions {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5eaf2;
+}
+
+.professional-application-actions
+  > button,
+.professional-application-actions
+  > a {
+  min-height: 42px;
+}
+
+.professional-application-actions
+  .delete-button {
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 1px solid #efbcb6;
+  border-radius: 10px;
+  background: #fff6f5;
+  color: #b43830;
+}
+
+.professional-status-control {
+  display: grid;
+  min-width: 220px;
+  margin: 0 0 0 auto;
+  gap: 6px;
+}
+
+.professional-status-control > span {
+  color: #607089;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.professional-status-control select {
+  min-height: 42px;
+  padding: 0 38px 0 12px;
+  border: 1px solid #c9d6e7;
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: #263b5c;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.professional-status-control
+  select:focus {
+  border-color: #3264ed;
+  box-shadow:
+    0 0 0 3px rgba(50, 100, 237, 0.12);
+}
+
+.professional-status-control
+  select:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+/* Empty application state */
+
+.applications-empty-state {
+  display: grid;
+  min-height: 340px;
+  padding: 55px 24px;
+  place-items: center;
+  align-content: center;
+  border: 1px dashed #bdcce2;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.applications-empty-state > span {
+  display: grid;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 16px;
+  place-items: center;
+  border-radius: 20px;
+  background: #eaf1ff;
+  color: #2d5ee5;
+}
+
+.applications-empty-state svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.applications-empty-state h2 {
+  margin: 0 0 8px;
+  color: #1a2e51;
+  font-size: 1.25rem;
+}
+
+.applications-empty-state p {
+  max-width: 500px;
+  margin: 0 0 20px;
+  color: #62728a;
+  line-height: 1.6;
+}
+
+/* Responsive applications */
+
+@media (max-width: 1000px) {
+  .application-summary-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .applications-dashboard
+    .applications-content {
+    padding:
+      30px 14px
+      60px;
+  }
+
+  .applications-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .applications-heading
+    .primary-button {
+    width: 100%;
+  }
+
+  .application-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .application-card-header {
+    flex-direction: column;
+  }
+
+  .application-date {
+    text-align: left;
+  }
+
+  .applicant-profile-summary {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+  }
+
+  .compact-match-score {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .professional-application-card
+    .match-skill-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .professional-application-card
+    .match-breakdown-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .professional-status-control {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .application-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .application-summary-grid article {
+    padding: 16px;
+  }
+
+  .application-filters {
+    display: grid;
+    width: 100%;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .application-filters button {
+    justify-content: space-between;
+  }
+
+  .professional-application-card {
+    padding: 19px 16px;
+    border-radius: 18px;
+  }
+
+  .application-timeline {
+    overflow-x: auto;
+    grid-template-columns:
+      repeat(4, minmax(78px, 1fr));
+  }
+
+  .applicant-match-heading {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .professional-application-card
+    .match-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .professional-application-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .professional-application-actions
+    > button,
+  .professional-application-actions
+    > a {
+    width: 100%;
+  }
+}
