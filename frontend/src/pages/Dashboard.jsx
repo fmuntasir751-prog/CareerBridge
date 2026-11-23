@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Link,
-  NavLink,
   useNavigate,
 } from "react-router-dom";
 
 import Chatbot from "../components/Chatbot";
+import DashboardHeader from "../components/DashboardHeader";
 import RecommendedJobs from "../components/RecommendedJobs";
 import api from "../services/api";
 
@@ -120,16 +120,26 @@ function Dashboard() {
     useState([]);
   const [studentProfile, setStudentProfile] =
     useState(null);
+  const [loadFailed, setLoadFailed] =
+    useState(false);
+  const [reloadKey, setReloadKey] =
+    useState(0);
 
   const isJapanese =
     i18n.language.startsWith("ja");
 
   useEffect(() => {
+    let ignore = false;
+
     const loadDashboard = async () => {
       try {
         const userResponse = await api.get(
           "/auth/me/",
         );
+
+        if (ignore) {
+          return;
+        }
 
         const currentUser = userResponse.data;
         setUser(currentUser);
@@ -143,59 +153,93 @@ function Dashboard() {
             api.get("/profiles/student/me/"),
           ]);
 
-          if (
+          if (ignore) {
+            return;
+          }
+
+          setNotifications(
             notificationResult.status
             === "fulfilled"
-          ) {
-            setNotifications(
-              notificationResult.value.data,
-            );
-          } else {
-            setNotifications([]);
-          }
+              ? notificationResult.value.data
+              : [],
+          );
 
-          if (
+          setStudentProfile(
             profileResult.status
             === "fulfilled"
-          ) {
-            setStudentProfile(
-              profileResult.value.data,
-            );
-          } else {
-            setStudentProfile(null);
-          }
+              ? profileResult.value.data
+              : null,
+          );
         }
-      } catch {
-        localStorage.removeItem(
-          "careerbridge-access",
-        );
-        localStorage.removeItem(
-          "careerbridge-refresh",
-        );
+      } catch (requestError) {
+        if (ignore) {
+          return;
+        }
 
-        navigate("/login");
+        // Only an invalid login should sign the user out.
+        // A sleeping server or a network error should not.
+        if (
+          requestError.response?.status === 401
+        ) {
+          localStorage.removeItem(
+            "careerbridge-access",
+          );
+          localStorage.removeItem(
+            "careerbridge-refresh",
+          );
+
+          navigate("/login");
+          return;
+        }
+
+        setLoadFailed(true);
       }
     };
 
     loadDashboard();
-  }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem(
-      "careerbridge-access",
-    );
-    localStorage.removeItem(
-      "careerbridge-refresh",
-    );
-
-    navigate("/login");
-  };
+    return () => {
+      ignore = true;
+    };
+  }, [navigate, reloadKey]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.is_read,
   ).length;
 
   const latestNotification = notifications[0];
+
+  if (loadFailed) {
+    return (
+      <div
+        className="page-loading"
+        role="alert"
+      >
+        <div>
+          <p>
+            {isJapanese
+              ? "ダッシュボードを読み込めませんでした。サーバーが起動中の可能性があります。"
+              : "Could not load the dashboard. The server may be waking up."}
+          </p>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => {
+              setLoadFailed(false);
+              setReloadKey(
+                (current) => current + 1,
+              );
+            }}
+          >
+            {isJapanese
+              ? "再読み込み"
+              : "Try again"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -336,8 +380,8 @@ function Dashboard() {
 
   const studentBannerText = profileReady
     ? isJapanese
-      ? "おかえりなさい。あなたに合う求人を確認しましょう。"
-      : "Welcome back! See the jobs that match you."
+      ? "あなたに合う求人を確認しましょう。"
+      : "See the jobs that match you."
     : isJapanese
       ? "プロフィールを完成させ、あなたに合う仕事を見つけましょう。"
       : "Complete your profile and discover opportunities that fit your career.";
@@ -402,174 +446,10 @@ function Dashboard() {
 
   return (
     <main className="dashboard-page">
-      <header className="dashboard-header">
-        <Link
-          to="/"
-          className="auth-brand"
-        >
-          <span>CB</span>
-          CareerBridge
-        </Link>
-
-        <nav
-          className="dashboard-primary-nav"
-          aria-label={
-            isJapanese
-              ? "メインナビゲーション"
-              : "Main navigation"
-          }
-        >
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese
-              ? "ダッシュボード"
-              : "Dashboard"}
-          </NavLink>
-
-          {isStudent ? (
-            <>
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "プロフィール"
-                  : "My Profile"}
-              </NavLink>
-
-              <NavLink
-                to="/jobs"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese ? "求人" : "Jobs"}
-              </NavLink>
-
-              <NavLink
-                to="/saved-jobs"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "保存した求人"
-                  : "Saved"}
-              </NavLink>
-
-              <NavLink
-                to="/applications"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "応募状況"
-                  : "Applications"}
-              </NavLink>
-            </>
-          ) : (
-            <>
-              <NavLink
-                to="/company-profile"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "企業プロフィール"
-                  : "Company Profile"}
-              </NavLink>
-
-              <NavLink
-                to="/my-jobs"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "求人管理"
-                  : "My Jobs"}
-              </NavLink>
-
-              <NavLink
-                to="/applications"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "応募者"
-                  : "Applicants"}
-              </NavLink>
-
-              <NavLink
-                to="/company-analytics"
-                className={({ isActive }) =>
-                  isActive ? "active" : ""
-                }
-              >
-                {isJapanese
-                  ? "分析"
-                  : "Analytics"}
-              </NavLink>
-            </>
-          )}
-        </nav>
-
-        <div className="dashboard-header-actions">
-          {isStudent && (
-            <button
-              className="notification-button"
-              type="button"
-              aria-label={
-                isJapanese
-                  ? "通知"
-                  : "Notifications"
-              }
-              onClick={() =>
-                navigate("/notifications")
-              }
-            >
-              <span
-                className="header-notification-icon"
-                aria-hidden="true"
-              >
-                <DashboardIcon
-                  name="notification"
-                />
-              </span>
-
-              <span className="notification-button-text">
-                {isJapanese
-                  ? "通知"
-                  : "Notifications"}
-              </span>
-
-              {unreadCount > 0 && (
-                <span className="notification-count">
-                  {unreadCount > 99
-                    ? "99+"
-                    : unreadCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleLogout}
-          >
-            {t("logout")}
-          </button>
-        </div>
-      </header>
+      <DashboardHeader
+        role={user.role}
+        unreadCount={unreadCount}
+      />
 
       <section className="dashboard-content">
         <section className="dashboard-welcome-card">
@@ -865,13 +745,17 @@ function Dashboard() {
                 <h2>
                   {isJapanese
                     ? latestNotification.title_ja
-                    : latestNotification.title_en}
+                      || latestNotification.title_en
+                    : latestNotification.title_en
+                      || latestNotification.title_ja}
                 </h2>
 
                 <p>
                   {isJapanese
                     ? latestNotification.message_ja
-                    : latestNotification.message_en}
+                      || latestNotification.message_en
+                    : latestNotification.message_en
+                      || latestNotification.message_ja}
                 </p>
               </div>
 
