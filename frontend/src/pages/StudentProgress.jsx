@@ -325,17 +325,25 @@ function StudentProgress() {
           <section className="progress-panel">
             <div className="progress-panel-heading">
               <div>
-                <h2>
-                  {isJapanese
-                    ? "未入力のプロフィール項目"
-                    : "Missing profile information"}
-                </h2>
+              <h2>
+  {progress.missing_fields.length > 0
+    ? isJapanese
+      ? "未入力のプロフィール項目"
+      : "Missing profile information"
+    : isJapanese
+      ? "プロフィールの状態"
+      : "Profile status"}
+</h2>
 
-                <p>
-                  {isJapanese
-                    ? "すべて入力してプロフィールを完成させましょう。"
-                    : "Complete these fields to strengthen your profile."}
-                </p>
+<p>
+  {progress.missing_fields.length > 0
+    ? isJapanese
+      ? "すべて入力してプロフィールを完成させましょう。"
+      : "Complete these fields to strengthen your profile."
+    : isJapanese
+      ? "プロフィールは求人マッチングの準備ができています。"
+      : "Your profile is ready for job matching."}
+</p>  
               </div>
             </div>
 
