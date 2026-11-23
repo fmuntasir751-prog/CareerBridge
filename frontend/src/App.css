@@ -10220,3 +10220,6 @@ line-clamp: 5;
     flex-direction: row;
   }
 }
+.student-progress-bottom-grid {
+  align-items: start;
+}
