@@ -36,10 +36,10 @@ function SiteFooter() {
           <span aria-hidden="true">•</span>
 
           <p>
-            {isJapanese
-              ? "開発チーム：Data Dynamo"
-              : "Developed by Data Dynamo"}
-          </p>
+  {isJapanese
+    ? "開発：Fahim Muntasir（Data Dynamo）"
+    : "Developed by Fahim Muntasir (Data Dynamo)"}
+</p>
         </div>
       </div>
     </footer>

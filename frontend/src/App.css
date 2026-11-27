@@ -11317,3 +11317,14 @@ line-clamp: 5;
     display: none;
   }
 }
+.public-home .hero-content h1 {
+  font-size: clamp(2.6rem, 5vw, 4.25rem);
+}
+
+.public-home .navbar.public-navbar {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  background: #fff;
+}
