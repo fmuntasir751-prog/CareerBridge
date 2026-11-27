@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 const FileIcon = () => (
   <svg
     aria-hidden="true"
@@ -291,20 +291,15 @@ function ApplyJob() {
 
   return (
     <main className="professional-apply-page">
-      <header className="dashboard-header">
-        <a href="/" className="auth-brand">
-          <span>CB</span>
-          CareerBridge
-        </a>
+      <DashboardHeader role="student" />
 
-        <button
-          type="button"
-          onClick={() => navigate(`/jobs/${id}`)}
-        >
-          ← {isJapanese ? "求人詳細" : "Job details"}
-        </button>
-      </header>
-
+<button
+  className="back-button"
+  type="button"
+  onClick={() => navigate(`/jobs/${id}`)}
+>
+  ← {isJapanese ? "求人詳細" : "Job details"}
+</button>
       <section className="professional-apply-content">
         <div className="apply-page-heading">
           <p className="eyebrow">

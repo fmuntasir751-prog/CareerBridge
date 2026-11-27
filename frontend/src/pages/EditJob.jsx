@@ -8,7 +8,7 @@ import {
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 const emptyJob = {
   title_en: "",
   title_ja: "",
@@ -463,6 +463,7 @@ function EditJob() {
 
   return (
     <main className="job-editor-page">
+       <DashboardHeader role="company" />
       <header className="profile-editor-header">
         <button
           className="back-button"

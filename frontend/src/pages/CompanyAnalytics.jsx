@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 function CompanyAnalytics() {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
@@ -257,22 +257,7 @@ function CompanyAnalytics() {
 
   return (
     <main className="analytics-page">
-      <header className="dashboard-header">
-        <a href="/" className="auth-brand">
-          <span>CB</span>
-          CareerBridge
-        </a>
-
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard")}
-        >
-          ←{" "}
-          {isJapanese
-            ? "ダッシュボード"
-            : "Dashboard"}
-        </button>
-      </header>
+     <DashboardHeader role="company" />
 
       <section className="analytics-content">
         <p className="eyebrow">

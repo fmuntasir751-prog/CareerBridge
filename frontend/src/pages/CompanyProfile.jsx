@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 const MAX_LOGO_SIZE = 5 * 1024 * 1024;
 
 const emptyProfile = {
@@ -458,6 +458,7 @@ function CompanyProfile() {
 
   return (
     <main className="company-profile-page">
+      <DashboardHeader role="company" />
       <header className="profile-editor-header">
         <button
           className="back-button"

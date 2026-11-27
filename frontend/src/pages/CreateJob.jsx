@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 const initialJob = {
   title_en: "",
   title_ja: "",
@@ -435,6 +435,7 @@ function CreateJob() {
 
   return (
     <main className="job-editor-page">
+      <DashboardHeader role="company" />
       <header className="profile-editor-header">
         <button
           className="back-button"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
+import DashboardHeader from "../components/DashboardHeader";
 import api from "../services/api";
 
 const fieldLabels = {
@@ -27,70 +28,58 @@ const fieldLabels = {
   },
 };
 
-const nextActionContent = {
+const nextActions = {
   complete_profile: {
-    en: {
-      title: "Complete your profile",
-      message:
-        "A complete profile helps companies understand your skills and experience.",
-      button: "Edit profile",
-      path: "/profile",
-    },
-    ja: {
-      title: "プロフィールを完成させましょう",
-      message:
-        "プロフィールを完成させると、企業にスキルや経験が伝わりやすくなります。",
-      button: "プロフィール編集",
-      path: "/profile",
-    },
+    path: "/profile",
+    en: [
+      "Complete your profile",
+      "A complete profile helps companies understand your skills and experience.",
+      "Edit profile",
+    ],
+    ja: [
+      "プロフィールを完成させましょう",
+      "プロフィールを完成させると、企業にスキルや経験が伝わりやすくなります。",
+      "プロフィール編集",
+    ],
   },
   apply_for_jobs: {
-    en: {
-      title: "Start applying for jobs",
-      message:
-        "Your profile is ready. Browse available jobs and submit your first application.",
-      button: "Browse jobs",
-      path: "/jobs",
-    },
-    ja: {
-      title: "求人に応募しましょう",
-      message:
-        "プロフィールの準備ができました。求人を探して最初の応募をしましょう。",
-      button: "求人を探す",
-      path: "/jobs",
-    },
+    path: "/jobs",
+    en: [
+      "Start applying for jobs",
+      "Your profile is ready. Browse available jobs and submit your first application.",
+      "Browse jobs",
+    ],
+    ja: [
+      "求人に応募しましょう",
+      "プロフィールの準備ができました。求人を探して最初の応募をしましょう。",
+      "求人を探す",
+    ],
   },
   prepare_for_interview: {
-    en: {
-      title: "Prepare for your interview",
-      message:
-        "You have an interview opportunity. Use the AI career assistant to practise.",
-      button: "Open dashboard",
-      path: "/dashboard",
-    },
-    ja: {
-      title: "面接の準備をしましょう",
-      message:
-        "面接の機会があります。AIキャリアアシスタントで練習しましょう。",
-      button: "ダッシュボード",
-      path: "/dashboard",
-    },
+    path: "/dashboard",
+    en: [
+      "Prepare for your interview",
+      "You have an interview opportunity. Use the AI career assistant to practise.",
+      "Open dashboard",
+    ],
+    ja: [
+      "面接の準備をしましょう",
+      "面接の機会があります。AIキャリアアシスタントで練習しましょう。",
+      "ダッシュボード",
+    ],
   },
   continue_job_search: {
-    en: {
-      title: "Continue your job search",
-      message:
-        "Keep exploring suitable opportunities and save interesting jobs.",
-      button: "Browse jobs",
-      path: "/jobs",
-    },
-    ja: {
-      title: "就職活動を続けましょう",
-      message:
-        "自分に合う求人を探し、気になる求人を保存しましょう。",
-      button: "求人を探す",
-      path: "/jobs",
-    },
+    path: "/jobs",
+    en: [
+      "Continue your job search",
+      "Keep exploring suitable opportunities and save interesting jobs.",
+      "Browse jobs",
+    ],
+    ja: [
+      "就職活動を続けましょう",
+      "自分に合う求人を探し、気になる求人を保存しましょう。",
+      "求人を探す",
+    ],
   },
 };
 
@@ -100,123 +89,94 @@ function StudentProgress() {
 
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const isJapanese = i18n.language.startsWith("ja");
   const language = isJapanese ? "ja" : "en";
 
   useEffect(() => {
-    const loadProgress = async () => {
-      try {
-        const response = await api.get(
-          "/profiles/student/progress/",
-        );
+    let active = true;
 
-        setProgress(response.data);
+    async function loadProgress() {
+      try {
+        const { data } = await api.get("/profiles/student/progress/");
+
+        if (active) setProgress(data);
       } catch {
-        setError(
-          isJapanese
-            ? "キャリア進捗を読み込めませんでした。"
-            : "Could not load your career progress.",
-        );
+        if (active) setLoadFailed(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
-    };
+    }
 
     loadProgress();
-  }, [isJapanese]);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (loading) {
     return (
-      <div className="page-loading">
+      <div className="page-loading" role="status">
         {isJapanese ? "読み込み中..." : "Loading..."}
       </div>
     );
   }
 
-  if (error || !progress) {
+  if (loadFailed || !progress) {
     return (
-      <div className="page-loading">
-        <div>
-          <p>{error}</p>
+      <main className="student-progress-page">
+        <DashboardHeader role="student" />
 
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-          >
+        <section className="student-progress-content">
+          <div className="form-message error" role="alert">
             {isJapanese
-              ? "ダッシュボードに戻る"
-              : "Back to dashboard"}
-          </button>
-        </div>
-      </div>
+              ? "キャリア進捗を読み込めませんでした。"
+              : "Could not load your career progress."}
+          </div>
+        </section>
+      </main>
     );
   }
 
-  const applicationCards = [
-    {
-      label: isJapanese ? "応募数" : "Applications",
-      value: progress.applications.total,
-      icon: "📨",
-    },
-    {
-      label: isJapanese ? "選考中" : "Reviewing",
-      value: progress.applications.reviewing,
-      icon: "🔍",
-    },
-    {
-      label: isJapanese ? "面接" : "Interviews",
-      value: progress.applications.interview,
-      icon: "💬",
-    },
-    {
-      label: isJapanese ? "採用" : "Accepted",
-      value: progress.applications.accepted,
-      icon: "🎉",
-    },
-    {
-      label: isJapanese ? "保存した求人" : "Saved jobs",
-      value: progress.saved_jobs,
-      icon: "🔖",
-    },
-  ];
+  const applications = progress.applications;
+  const missingFields = progress.missing_fields;
+  const hasMissingFields = missingFields.length > 0;
 
   const nextAction =
-    nextActionContent[progress.next_action]?.[language] ||
-    nextActionContent.continue_job_search[language];
+    nextActions[progress.next_action] || nextActions.continue_job_search;
+  const [actionTitle, actionMessage, actionButton] = nextAction[language];
+
+  const stats = [
+    ["total", isJapanese ? "応募数" : "Applications", applications.total, "📨"],
+    ["reviewing", isJapanese ? "選考中" : "Reviewing", applications.reviewing, "🔍"],
+    ["interview", isJapanese ? "面接" : "Interviews", applications.interview, "💬"],
+    ["accepted", isJapanese ? "採用" : "Accepted", applications.accepted, "🎉"],
+    ["saved", isJapanese ? "保存した求人" : "Saved jobs", progress.saved_jobs, "🔖"],
+  ];
+
+  const pipeline = [
+    ["pending", isJapanese ? "応募済み" : "Pending"],
+    ["reviewing", isJapanese ? "選考中" : "Reviewing"],
+    ["interview", isJapanese ? "面接" : "Interview"],
+    ["accepted", isJapanese ? "採用" : "Accepted"],
+  ];
+
+  const completionLabel = isJapanese ? "プロフィール完成度" : "Profile completion";
 
   return (
     <main className="student-progress-page">
-      <header className="dashboard-header">
-        <a href="/" className="auth-brand">
-          <span>CB</span>
-          CareerBridge
-        </a>
-
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard")}
-        >
-          ← {isJapanese ? "ダッシュボード" : "Dashboard"}
-        </button>
-      </header>
+      <DashboardHeader role="student" />
 
       <section className="student-progress-content">
         <p className="eyebrow">
-          {isJapanese
-            ? "キャリア活動"
-            : "Career activity"}
+          {isJapanese ? "キャリア活動" : "Career activity"}
         </p>
 
         <div className="student-progress-title">
           <div>
-            <h1>
-              {isJapanese
-                ? "キャリア進捗"
-                : "Career progress"}
-            </h1>
-
+            <h1>{isJapanese ? "キャリア進捗" : "Career progress"}</h1>
             <p>
               {isJapanese
                 ? "プロフィールと就職活動の進捗を確認できます。"
@@ -237,34 +197,24 @@ function StudentProgress() {
           <section className="progress-panel profile-progress-panel">
             <div
               className="profile-completion-circle"
-              style={{
-                "--completion": `${progress.profile_completion}%`,
-              }}
+              style={{ "--completion": `${progress.profile_completion}%` }}
+              role="progressbar"
+              aria-label={completionLabel}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Number(progress.profile_completion)}
             >
               <div>
-                <strong>
-                  {progress.profile_completion}%
-                </strong>
-
-                <span>
-                  {isJapanese ? "完了" : "complete"}
-                </span>
+                <strong>{progress.profile_completion}%</strong>
+                <span>{isJapanese ? "完了" : "complete"}</span>
               </div>
             </div>
 
             <div>
-              <h2>
-                {isJapanese
-                  ? "プロフィール完成度"
-                  : "Profile completion"}
-              </h2>
-
+              <h2>{completionLabel}</h2>
               <p>
-                {progress.completed_fields} /{" "}
-                {progress.total_fields}{" "}
-                {isJapanese
-                  ? "項目が入力済みです。"
-                  : "profile fields completed."}
+                {progress.completed_fields} / {progress.total_fields}{" "}
+                {isJapanese ? "項目が入力済みです。" : "profile fields completed."}
               </p>
 
               <button
@@ -272,50 +222,36 @@ function StudentProgress() {
                 type="button"
                 onClick={() => navigate("/profile")}
               >
-                {isJapanese
-                  ? "プロフィール編集"
-                  : "Edit profile"}
+                {isJapanese ? "プロフィール編集" : "Edit profile"}
               </button>
             </div>
           </section>
 
           <section className="progress-panel next-action-panel">
-            <span className="next-action-icon">✨</span>
-
+            <span className="next-action-icon" aria-hidden="true">✨</span>
             <div>
-              <small>
-                {isJapanese
-                  ? "次のおすすめ"
-                  : "Recommended next step"}
-              </small>
-
-              <h2>{nextAction.title}</h2>
-              <p>{nextAction.message}</p>
+              <small>{isJapanese ? "次のおすすめ" : "Recommended next step"}</small>
+              <h2>{actionTitle}</h2>
+              <p>{actionMessage}</p>
 
               <button
                 className="primary-button"
                 type="button"
-                onClick={() =>
-                  navigate(nextAction.path)
-                }
+                onClick={() => navigate(nextAction.path)}
               >
-                {nextAction.button}
+                {actionButton}
               </button>
             </div>
           </section>
         </div>
 
         <div className="student-stat-grid">
-          {applicationCards.map((card) => (
-            <article
-              className="student-stat-card"
-              key={card.label}
-            >
-              <span>{card.icon}</span>
-
+          {stats.map(([key, label, value, icon]) => (
+            <article className="student-stat-card" key={key}>
+              <span aria-hidden="true">{icon}</span>
               <div>
-                <small>{card.label}</small>
-                <strong>{card.value}</strong>
+                <small>{label}</small>
+                <strong>{value}</strong>
               </div>
             </article>
           ))}
@@ -325,52 +261,43 @@ function StudentProgress() {
           <section className="progress-panel">
             <div className="progress-panel-heading">
               <div>
-              <h2>
-  {progress.missing_fields.length > 0
-    ? isJapanese
-      ? "未入力のプロフィール項目"
-      : "Missing profile information"
-    : isJapanese
-      ? "プロフィールの状態"
-      : "Profile status"}
-</h2>
-
-<p>
-  {progress.missing_fields.length > 0
-    ? isJapanese
-      ? "すべて入力してプロフィールを完成させましょう。"
-      : "Complete these fields to strengthen your profile."
-    : isJapanese
-      ? "プロフィールは求人マッチングの準備ができています。"
-      : "Your profile is ready for job matching."}
-</p>  
+                <h2>
+                  {hasMissingFields
+                    ? isJapanese ? "未入力のプロフィール項目" : "Missing profile information"
+                    : isJapanese ? "プロフィールの状態" : "Profile status"}
+                </h2>
+                <p>
+                  {hasMissingFields
+                    ? isJapanese
+                      ? "すべて入力してプロフィールを完成させましょう。"
+                      : "Complete these fields to strengthen your profile."
+                    : isJapanese
+                      ? "プロフィールは求人マッチングの準備ができています。"
+                      : "Your profile is ready for job matching."}
+                </p>
               </div>
             </div>
 
-            {progress.missing_fields.length > 0 ? (
+            {hasMissingFields ? (
               <div className="missing-field-list">
-                {progress.missing_fields.map((field) => (
+                {missingFields.map((field) => (
                   <button
-                    type="button"
                     key={field}
+                    type="button"
                     onClick={() => navigate("/profile")}
                   >
-                    <span>+</span>
+                    <span aria-hidden="true">+</span>
                     {fieldLabels[language][field] || field}
                   </button>
                 ))}
               </div>
             ) : (
               <div className="profile-complete-message">
-                <span>✅</span>
-
+                <span aria-hidden="true">✅</span>
                 <div>
                   <strong>
-                    {isJapanese
-                      ? "プロフィールが完成しました"
-                      : "Your profile is complete"}
+                    {isJapanese ? "プロフィールが完成しました" : "Your profile is complete"}
                   </strong>
-
                   <p>
                     {isJapanese
                       ? "すべての項目が入力されています。"
@@ -384,56 +311,20 @@ function StudentProgress() {
           <section className="progress-panel">
             <div className="progress-panel-heading">
               <div>
-                <h2>
-                  {isJapanese
-                    ? "応募状況"
-                    : "Application pipeline"}
-                </h2>
-
+                <h2>{isJapanese ? "応募状況" : "Application pipeline"}</h2>
                 <p>
-                  {isJapanese
-                    ? "現在の応募ステータス"
-                    : "Your current application statuses"}
+                  {isJapanese ? "現在の応募ステータス" : "Your current application statuses"}
                 </p>
               </div>
             </div>
 
             <div className="student-pipeline">
-              <div>
-                <span>
-                  {isJapanese ? "応募済み" : "Pending"}
-                </span>
-                <strong>
-                  {progress.applications.pending}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  {isJapanese ? "選考中" : "Reviewing"}
-                </span>
-                <strong>
-                  {progress.applications.reviewing}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  {isJapanese ? "面接" : "Interview"}
-                </span>
-                <strong>
-                  {progress.applications.interview}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  {isJapanese ? "採用" : "Accepted"}
-                </span>
-                <strong>
-                  {progress.applications.accepted}
-                </strong>
-              </div>
+              {pipeline.map(([key, label]) => (
+                <div key={key}>
+                  <span>{label}</span>
+                  <strong>{applications[key]}</strong>
+                </div>
+              ))}
             </div>
 
             <button
@@ -441,9 +332,7 @@ function StudentProgress() {
               type="button"
               onClick={() => navigate("/applications")}
             >
-              {isJapanese
-                ? "応募履歴を見る"
-                : "View applications"}
+              {isJapanese ? "応募履歴を見る" : "View applications"}
             </button>
           </section>
         </div>

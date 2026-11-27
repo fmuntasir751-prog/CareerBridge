@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Link,
-  NavLink,
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import DashboardHeader from "../components/DashboardHeader";
 
 import api from "../services/api";
 
@@ -410,77 +407,7 @@ function StudentProfile() {
 
   return (
     <main className="student-profile-page">
-      <header className="dashboard-header">
-        <Link
-          to="/"
-          className="auth-brand"
-        >
-          <span>CB</span>
-          CareerBridge
-        </Link>
-
-        <nav
-          className="dashboard-primary-nav"
-          aria-label={
-            isJapanese
-              ? "メインナビゲーション"
-              : "Main navigation"
-          }
-        >
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese
-              ? "ダッシュボード"
-              : "Dashboard"}
-          </NavLink>
-
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese
-              ? "プロフィール"
-              : "My Profile"}
-          </NavLink>
-
-          <NavLink
-            to="/jobs"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese ? "求人" : "Jobs"}
-          </NavLink>
-
-          <NavLink
-            to="/saved-jobs"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese
-              ? "保存した求人"
-              : "Saved"}
-          </NavLink>
-
-          <NavLink
-            to="/applications"
-            className={({ isActive }) =>
-              isActive ? "active" : ""
-            }
-          >
-            {isJapanese
-              ? "応募状況"
-              : "Applications"}
-          </NavLink>
-        </nav>
-      </header>
+      <DashboardHeader role="student" />
 
       <section className="student-profile-layout">
         <aside className="student-profile-sidebar">

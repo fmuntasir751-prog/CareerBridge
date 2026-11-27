@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   getApiErrorMessage,
 } from "../services/api";
-
+import DashboardHeader from "../components/DashboardHeader";
 const companyStatusOptions = [
   "pending",
   "reviewing",
@@ -698,27 +698,7 @@ function Applications() {
 
   return (
     <main className="applications-page applications-dashboard">
-      <header className="dashboard-header">
-        <a
-          href="/"
-          className="auth-brand"
-        >
-          <span>CB</span>
-          CareerBridge
-        </a>
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/dashboard")
-          }
-        >
-          ←{" "}
-          {isJapanese
-            ? "ダッシュボード"
-            : "Dashboard"}
-        </button>
-      </header>
+      {user?.role && <DashboardHeader role={user.role} />}
 
       <section className="applications-content">
         <div className="applications-heading">
